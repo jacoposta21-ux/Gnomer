@@ -44,6 +44,8 @@ export default {
 
   fishing: { wait: "Warte auf einen Biss… (E holt ein)", bite: "Biss! Drück E!", reel: "Drück E, wenn die Markierung im Grünen ist!" },
 
+  cinematic: { sleep: "Zzz…", rest: "Fünf Stunden später…", passOut: "Dir fallen die Augen zu…" },
+
   lang: { en: "English", it: "Italiano", es: "Español", pt: "Português", fr: "Français", de: "Deutsch" },
 
   achievement: {
@@ -105,7 +107,7 @@ export default {
 
   tutorial: {
     follow: "➜ Folge dem gelben Pfeil auf dem Bildschirm.",
-    short: { exit: "Geh aus dem Haus", clear: "Unkraut entfernen", till: "Boden hacken", plant: "Samen pflanzen", water: "Samen gießen", ship: "Versandkiste", talk: "Sprich mit jemandem", shop: "Kramladen", notebook: "Notizbuch öffnen (Tab)", sleep: "Geh ins Bett", inspect: "Funkeln untersuchen", ask: "Nach Vergnomungen fragen", lectern: "Anklagepult", craft: "Werkbank: Amulett herstellen", charm: "Amulett schenken" },
+    short: { exit: "Geh aus dem Haus", clear: "Unkraut entfernen", till: "Boden hacken", plant: "Samen pflanzen", water: "Samen gießen", ship: "Versandkiste", talk: "Sprich mit jemandem", shop: "Kramladen: Gratis-Samen", notebook: "Notizbuch öffnen (Tab)", sleep: "Geh ins Bett", inspect: "Funkeln untersuchen", ask: "Nach Vergnomungen fragen", lectern: "Anklagepult", craft: "Werkbank: Amulett herstellen", charm: "Amulett schenken", workbench: "Werkbank ansehen", rest: "Auf der Bank ausruhen" },
     title_farm: "Hof-Grundlagen {n}/{total}",
     title_detective: "Detektiv {n}/{total}",
     skip: "Diese Ziele überspringen",
@@ -118,7 +120,7 @@ export default {
     water: "Wähle die Gießkanne (Platz 2) und gieß deine Samen. Nachfüllen am Fluss, Brunnen oder Springbrunnen.",
     ship: "Öffne die Versandkiste neben dem Haus und leg etwas hinein: es wird über Nacht verkauft.",
     talk: "Geh über die Brücke zum Dorfplatz und sprich mit jemandem (stell dich davor und drück E).",
-    shop: "Besuch Pepperpots Kramladen (9:00-17:00) und benutz die Theke: Samen kaufen, Ernte verkaufen.",
+    shop: "Geh zu Pepperpots Kramladen im Dorf (öffnet um 8:00) und benutz die Theke: Marigold schenkt dir deine ersten Samen.",
     notebook: "Öffne dein Notizbuch (Tab oder N, oder der Buch-Knopf), um Verdächtige und Hinweise zu sehen.",
     sleep: "Geh nach Hause und schlaf in deinem Bett, um zu speichern und einen neuen Tag zu beginnen.",
     inspect: "Jemand wurde vergnomt! Geh zur Zwergenstatue und untersuche das Funkeln in der Nähe (E): das sind Hinweise.",
@@ -126,12 +128,15 @@ export default {
     lectern: "So gewinnst du: Wenn du weißt, wer der Gnomer ist, geh ins Rathaus (nördlich vom Platz, 8:00-20:00) und benutz das Anklagepult. Schau es dir jetzt an (du kannst abbrechen).",
     craft: "Schütze das nächste Opfer: Stell an der Werkbank neben dem Haus eine Knoblauchgirlande her (2 Knoblauch + 1 Rübe).",
     charm: "Gib das Amulett der Person, die der Gnomer deiner Meinung nach als Nächstes wählt (sprich sie an, „Etwas schenken…“).",
+    workbench: "Wirf einen Blick auf die Werkbank neben dem Haus: Hier machst du aus Ernte Amulette, die Dorfbewohner vor dem Gnomer schützen.",
+    rest: "Müde? Setz dich auf die Bank vor deinem Haus (E): Fünf Stunden vergehen und deine Energie ist wieder voll.",
   },
 
   days: ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"],
   weather: { sunny: "Sonnig", cloudy: "Bewölkt", rain: "Regen" },
 
   prompt: {
+    rest: "Auf der Bank ausruhen",
     fish: "Angeln",
     feedCat: "Den Fisch der Katze geben",
     talk: "Mit {name} sprechen",
@@ -173,11 +178,15 @@ export default {
     garlic: { name: "Knoblauch", desc: "Riecht nach Schutz. Und nach Knoblauch." },
     pumpkin: { name: "Kürbis", desc: "Groß, orange und extrem herbstlich." },
     cranberry: { name: "Cranberrys", desc: "Säuerlich, rot und sehr gut im Hüpfen." },
-    fishing_rod: { name: "Angelrute", desc: "Stell dich vor den Fluss und drück E zum Auswerfen. Warte auf den Biss und stopp dann die Markierung im Grünen." },
+    fishing_rod: { name: "Angelrute", desc: "Stell dich vor den Fluss und drück E zum Auswerfen (verbraucht einen Köder). Warte auf den Biss und stopp dann die Markierung im Grünen." },
     mudminnow: { name: "Schlammelritze", desc: "Ein kleiner, fröhlicher Fisch. Riecht nach Flussgrund." },
     river_perch: { name: "Flussbarsch", desc: "Gestreift und stolz. Der Liebling des Kapitäns." },
     silver_eel: { name: "Silberaal", desc: "Beißt nur im Dunkeln. Glitschig." },
     golden_carp: { name: "Goldkarpfen", desc: "Selten und glänzend. Beißt bei Regen öfter." },
+    bait: { name: "Köder", desc: "Saftige Würmer zum Angeln. Jeder Wurf verbraucht einen. Im 5er-Pack." },
+    tin_can: { name: "Leere Dose", desc: "Rostig und verbeult. Nichts wert." },
+    old_boot: { name: "Alter Stiefel", desc: "Jemandes verlorener Stiefel. Riecht nach Fluss." },
+    soggy_paper: { name: "Nasse Zeitung", desc: "Die Nachrichten von gestern, triefend nass." },
     tea_tin: { name: "Teedose", desc: "Rauchiger Schwarztee. Ein klassisches Geschenk." },
     aster_bouquet: { name: "Asternstrauß", desc: "Lila Herbstblumen, mit Schnur gebunden." },
     hard_cheese: { name: "Hartkäse", desc: "Ein Jahr in einer Höhle gereift. Angeblich." },
@@ -187,12 +196,16 @@ export default {
   },
 
   msg: {
+    junkCaught: "Du hast… {item} geangelt. Wie schön.",
+    needBait: "Zum Angeln brauchst du Köder. Kauf welche im Laden.",
+    rested: "Du fühlst dich vollkommen erholt!",
+    restTooLate: "Zu spät, um hier draußen auszuruhen. Ab ins Bett!",
     fishWhere: "Stell dich vor den Fluss, um die Angel auszuwerfen.",
     fishCancel: "Du holst die Schnur ein.",
     fishEscaped: "Er ist entwischt!",
     fishTooSoon: "Zu früh! Warte auf den Biss.",
     fishCaught: "Du hast gefangen: {item}!",
-    catFriend: "Die Katze liebt dich! Sie folgt dir zwei Tage lang und lässt sich öfter streicheln.",
+    catFriend: "Die Katze liebt dich! Sie folgt dir, bis du schlafen gehst, und lässt sich öfter streicheln.",
     prowlTime: "22:30 – irgendwo da draußen schleicht der Gnomer herum…",
     tooTired: "Du bist zu müde. Ab ins Bett.",
     canEmpty: "Die Gießkanne ist leer. Füll sie am Fluss, Brunnen oder Springbrunnen auf.",
@@ -206,10 +219,10 @@ export default {
     needTilled: "Samen brauchen gehackten Boden.",
     harvested: "+1 {item}",
     cleared: "Erledigt!",
-    locked_store: "Der Laden ist geschlossen. Geöffnet 9:00-17:00, sonntags zu.",
+    locked_store: "Der Laden ist geschlossen. Geöffnet 8:00-17:00, sonntags zu.",
     locked_hall: "Das Rathaus ist geschlossen. Sprechzeiten 8:00-20:00.",
     locked_house: "Abgeschlossen. Es ist zu spät (oder zu früh) für Besuch.",
-    shopClosed: "Die Kasse ist zu. Komm zwischen 9:00 und 17:00 wieder (nicht sonntags).",
+    shopClosed: "Die Kasse ist zu. Komm zwischen 8:00 und 17:00 wieder (nicht sonntags).",
     lateWarning: "Es ist sehr spät. Geh vor 2:00 ins Bett!",
     midnight: "Mitternacht. Dein Bett ruft.",
     crafted: "Hergestellt: {item}",
@@ -243,14 +256,14 @@ export default {
     title: "Spielanleitung",
     lines: [
       "Beweg dich mit WASD oder den Pfeiltasten (Touch: auf der linken Bildschirmhälfte ziehen).",
-      "Angeln: Kauf eine Angel im Laden, stell dich vor den Fluss und drück E. Wenn „!“ erscheint, drück E und dann noch einmal E, während die Markierung im Grünen ist. Gib einer Katze einen Fisch, dann folgt sie dir zwei Tage lang.",
+      "Angeln: Kauf Angel und Köder im Laden, stell dich vor den Fluss und drück E. Wenn „!“ erscheint, drück E und dann noch einmal E, während die Markierung im Grünen ist. Manchmal angelst du Müll: verkauf oder versende ihn für 0, um ihn loszuwerden. Gib einer Katze einen Fisch, dann folgt sie dir bis zum Schlafengehen.",
       "E oder Leertaste benutzen das gewählte Werkzeug oder sprechen/interagieren mit dem, was vor dir ist. Du kannst auch in die Welt klicken.",
       "Sprich einmal am Tag mit den Dorfbewohnern, um Freunde zu finden. Wähle im Gespräch „Etwas schenken…“, um Geschenke oder Amulette zu überreichen (ein Geschenk pro Person und Tag).",
       "Wähle Leistenplätze mit 1-5, dem Mausrad oder durch Antippen. Öffne die Tasche (I), um Gegenstände umzusortieren.",
       "Menüs gehen auch mit der Tastatur: Pfeile/WASD zum Bewegen, E oder Leertaste zum Wählen, Esc zum Schließen.",
       "Controller: linker Stick oder Steuerkreuz zum Bewegen, A benutzen, B zurück/Pause, X Tasche, Y Notizbuch, LB/RB Leiste.",
       "Landwirtschaft: Schutt mit der Sense entfernen, mit der Hacke hacken, säen und täglich gießen. Regen gießt für dich.",
-      "Leg deine Ernte in die Versandkiste, um sie über Nacht zu verkaufen, oder verkauf sie im Laden (9:00-17:00, sonntags zu).",
+      "Leg deine Ernte in die Versandkiste, um sie über Nacht zu verkaufen, oder verkauf sie im Laden (8:00-17:00, sonntags zu).",
       "Schlaf in deinem Bett, um zu speichern und einen neuen Tag zu beginnen. Bist du nach 2:00 noch wach, brichst du zusammen (und verlierst etwas Gold).",
       "SO GEWINNST DU: Finde heraus, wer der Gnomer ist, geh dann ins Rathaus (nördlich vom Platz, geöffnet 8:00-20:00) und benutz das Anklagepult. Wählst du die richtige Person, ist der Fall gelöst.",
       "Alle paar Nächte vergnomt jemand einen Dorfbewohner. Untersuche das Funkeln bei den Zwergen, frag die Leute („Nach den Vergnomungen fragen“) und durchsuch Häuser, wenn die Besitzer unterwegs sind.",
@@ -324,7 +337,7 @@ export default {
   board: {
     title: "Anschlagbrett von Mildew Hollow",
     empty: "VERLOREN: eine Katze. GEFUNDEN: eine Katze (eine andere). Ansonsten nichts zu berichten.",
-    store: "KRAMLADEN: geöffnet 9:00-17:00. Sonntags geschlossen. — M. Pepperpot",
+    store: "KRAMLADEN: geöffnet 8:00-17:00. Sonntags geschlossen. — M. Pepperpot",
     hall: "RATHAUS: Wer weiß, wer der Gnomer ist, benutze bitte das Anklagepult. Seid euch sicher. — Bürgermeister Quill",
   },
 
@@ -351,6 +364,8 @@ export default {
   },
 
   shop: {
+    gift: "Willkommen in Mildew Hollow! Hier sind Rüben- und Knoblauchsamen, aufs Haus. Nur dieses eine Mal!",
+    giftToast: "Marigold hat dir Samen geschenkt!",
     title: "Pepperpots Kramladen",
     buyTab: "Kaufen",
     sellTab: "Verkaufen",
@@ -709,7 +724,7 @@ export default {
       name: "Marigold Pepperpot", short: "Marigold", title: "Ladenbesitzerin",
       bio: "Führt den Kramladen. Zählt alles zweimal. Ängstlich, ehrlich und kein bisschen zwergenhaft.",
       lines: {
-        hi1: "Willkommen! Der Laden hat von neun bis fünf geöffnet, sonntags zu. Ich habe die Stunden gezählt. Zweimal.",
+        hi1: "Willkommen! Der Laden hat von acht bis fünf geöffnet, sonntags zu. Ich habe die Stunden gezählt. Zweimal.",
         hi2: "Wenn du mir Rüben verkaufst, zähle ich sie. Zweimal. Nichts Persönliches.",
         hi3: "Ich habe heute die Bücher abgeschlossen. Sie gingen auf. Ich hab ein bisschen geweint.",
         rain: "Bei Regen knarzt der Boden. Ich zähle das Knarzen.",

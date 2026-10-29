@@ -4,7 +4,7 @@ export const DAY_END = 26 * 60;              // 2:00 next morning -> pass out
 export const REAL_SECONDS_PER_DAY = 540;     // ~9 real minutes per in-game day
 export const MINUTES_PER_SECOND = (DAY_END - DAY_START) / REAL_SECONDS_PER_DAY;
 export const SEASON_DAYS = 28;
-export const STORE = { open: 9 * 60, close: 17 * 60, closedDow: 6 }; // closed on Sundays
+export const STORE = { open: 8 * 60, close: 17 * 60, closedDow: 6 }; // closed on Sundays
 
 export function parseTime(s) {
   const [h, m] = s.split(':').map(Number);

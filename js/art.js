@@ -799,15 +799,55 @@ function itemIcon(id) {
     case 'garlic_garland': for (let i = 0; i < 5; i++) { const x = 2 + i * 3, y = 4 + Math.abs(2 - i) * -1 + 4; R(g, x, y, 3, 3, PAL.garlic); P(g, x + 1, y - 1, PAL.leafG); } R(g, 2, 3, 12, 1, PAL.leafB); break;
     case 'pumpkin_ward': R(g, 3, 5, 10, 9, PAL.pumpkin); R(g, 7, 2, 2, 3, PAL.leafB); R(g, 5, 8, 2, 2, PAL.lit); R(g, 9, 8, 2, 2, PAL.lit); R(g, 6, 11, 4, 1, PAL.lit); R(g, 3, 5, 10, 1, '#f7a44a'); break;
     case 'fishing_rod': for (let i = 0; i < 12; i++) R(g, 2 + i, 13 - i, 1, 1, i < 4 ? PAL.woodD : PAL.wood); R(g, 13, 1, 1, 10, '#d8d4c8'); R(g, 12, 11, 3, 2, PAL.red); R(g, 3, 10, 3, 3, '#5a565c'); break;
-    case 'mudminnow': case 'river_perch': case 'silver_eel': case 'golden_carp': {
-      const c = { mudminnow: ['#8a7a5a', '#6a5a3a'], river_perch: ['#7d9a48', '#4f6a2e'], silver_eel: ['#b8c4cc', '#7f8f99'], golden_carp: ['#e2b54a', '#c47a2a'] }[id];
-      if (id === 'silver_eel') { R(g, 1, 7, 14, 3, c[0]); R(g, 2, 6, 10, 1, c[1]); R(g, 13, 6, 2, 1, c[0]); P(g, 3, 8, PAL.ink); break; }
-      R(g, 3, 5, 9, 6, c[0]); R(g, 2, 6, 11, 4, c[0]); R(g, 4, 5, 6, 1, c[1]); R(g, 12, 4, 3, 8, c[1]); R(g, 13, 6, 2, 4, c[0]);
-      P(g, 4, 7, PAL.ink); P(g, 6, 9, c[1]); P(g, 8, 8, c[1]);
-      if (id === 'river_perch') for (let x = 5; x < 11; x += 2) R(g, x, 6, 1, 4, c[1]);
-      if (id === 'golden_carp') { P(g, 5, 6, '#fff0b0'); P(g, 7, 7, '#fff0b0'); }
+    case 'mudminnow': case 'river_perch': case 'golden_carp': {
+      // body [base, back, belly, fins]
+      const c = { mudminnow: ['#8f7d58', '#5f4e33', '#c9b88e', '#6a5a3a'], river_perch: ['#86a64e', '#4a6a2a', '#e2e6a8', '#d0603a'], golden_carp: ['#e8b448', '#b8702a', '#fff0a8', '#e07a2a'] }[id];
+      const body = [[5, 5, 9], [6, 3, 11], [7, 2, 12], [8, 1, 12], [9, 2, 12], [10, 3, 11], [11, 5, 9]];
+      const tail = [[4, 14, 15], [5, 13, 15], [6, 13, 14], [7, 12, 13], [8, 12, 13], [9, 12, 13], [10, 13, 14], [11, 13, 15], [12, 14, 15]];
+      const fin = [[3, 6, 8], [4, 5, 9]];
+      const ol = shade(c[1], -0.45);
+      for (const [y, x0, x1] of [...body, ...tail, ...fin]) R(g, x0 - 1, y, x1 - x0 + 3, 1, ol); // outline
+      for (const [y, x0, x1] of [...body, ...tail, ...fin]) { R(g, x0, y - 1, x1 - x0 + 1, 1, ol); R(g, x0, y + 1, x1 - x0 + 1, 1, ol); }
+      for (const [y, x0, x1] of fin) R(g, x0, y, x1 - x0 + 1, 1, c[3]);
+      for (const [y, x0, x1] of tail) R(g, x0, y, x1 - x0 + 1, 1, c[3]);
+      for (const [y, x0, x1] of body) R(g, x0, y, x1 - x0 + 1, 1, y <= 6 ? c[1] : y >= 10 ? c[2] : c[0]);
+      R(g, 2, 9, 10, 1, shade(c[0], 0.15)); // belly sheen
+      R(g, 5, 7, 1, 3, c[1]); // gill
+      R(g, 6, 10, 2, 1, c[3]); P(g, 7, 11, c[3]); // pectoral fin
+      P(g, 3, 7, '#fbf6e8'); P(g, 3, 8, PAL.ink); P(g, 4, 7, PAL.ink); P(g, 1, 9, ol); // eye + mouth
+      if (id === 'river_perch') for (const x of [7, 9, 11]) R(g, x, 6, 1, 4, c[1]);
+      if (id === 'mudminnow') for (const [x, y] of [[7, 7], [9, 8], [10, 6], [8, 9]]) P(g, x, y, c[1]);
+      if (id === 'golden_carp') { for (const [x, y] of [[7, 7], [9, 7], [8, 8], [10, 8], [7, 9], [9, 9]]) P(g, x, y, c[2]); P(g, 1, 10, c[1]); P(g, 0, 11, c[1]); }
       break;
     }
+    case 'silver_eel': {
+      const ol = '#4a5560';
+      const pts = [];
+      for (let x = 1; x < 15; x++) pts.push([x, 7 + Math.round(Math.sin(x * 0.7) * 1.6)]);
+      for (const [x, y] of pts) R(g, x, y - 2, 1, 5, ol);
+      for (const [x, y] of pts) { const th = x > 11 ? 1 : 3; R(g, x, y - 1, 1, th, '#b8c4cc'); P(g, x, y - 1, '#7f8f99'); if (th > 1) P(g, x, y + 1, '#e4ecf0'); }
+      for (const [x, y] of pts.slice(3, 13)) P(g, x, y - 2, '#8a9aa6'); // dorsal ridge
+      const [hx, hy] = pts[0]; P(g, hx + 1, hy - 1, '#fbf6e8'); P(g, hx + 1, hy, PAL.ink);
+      break;
+    }
+    case 'bait': // tin of worms
+      R(g, 2, 7, 12, 7, '#5a6670'); R(g, 2, 7, 12, 1, '#8d9aa4'); R(g, 3, 13, 10, 1, '#3f4a52'); R(g, 4, 9, 8, 3, '#c9b35a'); R(g, 6, 10, 4, 1, '#8a5a3a');
+      for (const [x, y] of [[3, 5], [5, 4], [7, 5], [9, 3], [11, 5], [12, 4]]) R(g, x, y, 2, 2, '#e48a9a');
+      R(g, 4, 6, 8, 1, '#c86a7a'); P(g, 9, 2, '#e48a9a'); P(g, 5, 3, '#c86a7a');
+      break;
+    case 'tin_can':
+      R(g, 4, 3, 8, 11, '#8d969c'); R(g, 4, 3, 8, 2, '#b8c0c4'); R(g, 5, 4, 6, 1, '#6a7278'); R(g, 4, 6, 8, 4, '#b0503a'); R(g, 5, 7, 3, 2, '#e8d8a8');
+      R(g, 9, 9, 3, 3, '#6a7278'); P(g, 11, 8, '#a0663a'); P(g, 5, 12, '#a0663a'); P(g, 6, 13, '#7a4a2a'); R(g, 4, 13, 8, 1, '#5a6268');
+      break;
+    case 'old_boot':
+      R(g, 4, 2, 6, 9, '#6a4a2e'); R(g, 4, 2, 6, 1, '#8a6a4a'); R(g, 4, 10, 10, 3, '#6a4a2e'); R(g, 3, 13, 12, 2, '#3a2a1a');
+      R(g, 6, 4, 3, 1, '#c8b88a'); R(g, 6, 6, 3, 1, '#c8b88a'); R(g, 6, 8, 3, 1, '#c8b88a'); P(g, 12, 11, '#8a6a4a'); R(g, 13, 14, 2, 1, '#5f8aa0'); P(g, 2, 14, '#5f8aa0');
+      break;
+    case 'soggy_paper':
+      R(g, 2, 4, 12, 9, '#c8c8be'); R(g, 2, 4, 12, 1, '#e4e4da'); R(g, 7, 4, 1, 9, '#a8a89e');
+      for (const y of [6, 8, 10]) { R(g, 3, y, 3, 1, '#7a7a74'); R(g, 9, y, 4, 1, '#7a7a74'); }
+      R(g, 3, 12, 2, 3, '#c8c8be'); R(g, 10, 12, 2, 2, '#c8c8be'); P(g, 4, 15, '#8fb4c6'); P(g, 11, 14, '#8fb4c6'); P(g, 12, 5, '#9fb0b8');
+      break;
     case 'backpack': R(g, 3, 4, 10, 11, '#7a5a3a'); R(g, 4, 2, 8, 3, '#8a6a4a'); R(g, 5, 8, 6, 4, '#9a7a5a'); R(g, 7, 9, 2, 1, PAL.yellow); break;
     default: R(g, 4, 4, 8, 8, '#ff00ff');
   }

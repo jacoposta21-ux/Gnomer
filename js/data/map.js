@@ -49,6 +49,7 @@ export const MAP = {
     { kind: 'bin', x: 9, y: 8, interact: 'bin' },
     { kind: 'workbench', x: 4, y: 8, w: 2, interact: 'craft' },
     { kind: 'well', x: 14, y: 7, interact: 'well' },
+    { kind: 'bench', x: 11, y: 8, w: 2, flat: true }, // the farm bench: rest here
     { kind: 'board', x: 44, y: 14, interact: 'board' },
     { kind: 'fountain', x: 47, y: 19, w: 2, h: 2, interact: 'well' },
     { kind: 'stall', x: 52, y: 17, w: 2 },

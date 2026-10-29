@@ -48,7 +48,7 @@ export class UI {
     this.bubbles = [];
   }
 
-  get blocking() { return !!this.modal; }
+  get blocking() { return !!this.modal || !!this.cinematic; }
 
   // Re-apply translated labels on static HTML (after a language change).
   refreshLabels() {
@@ -57,14 +57,12 @@ export class UI {
     $('#btn-pause').setAttribute('aria-label', t('ui.pause'));
     $('#btn-mute').setAttribute('aria-label', t('ui.mute'));
     $('#touch-action').setAttribute('aria-label', t('ui.action'));
-    $('#btn-wait').setAttribute('aria-label', t('ui.wait')); $('#btn-wait').title = t('ui.wait');
     this._hotSig = ''; this._prompt = undefined;
   }
 
   init(game) {
     this.game = game;
     $('#btn-mute').onclick = () => this.toggleMute();
-    $('#btn-wait').onclick = () => { if (!this.modal && game.mode === 'play') { if (game.waiting) game.stopWaiting(); else game.startWaiting(); } };
     $('#btn-bag').onclick = () => { if (!this.modal && game.mode === 'play') this.openBag(game); };
     $('#btn-notebook').onclick = () => { if (!this.modal && game.mode === 'play') this.openNotebook(game); };
     $('#btn-pause').onclick = () => { if (!this.modal && game.mode === 'play') this.openPause(game); };
@@ -75,7 +73,6 @@ export class UI {
     $('#btn-mute').setAttribute('aria-label', t('ui.mute'));
     $('#touch-action').setAttribute('aria-label', t('ui.action'));
     this._muteIcon();
-    $('#btn-wait').setAttribute('aria-label', t('ui.wait')); $('#btn-wait').title = t('ui.wait');
     // clicking the dimmed backdrop of a closable menu closes it; clicking during dialogue advances it
     this.root.addEventListener('pointerdown', (e) => {
       if (e.target !== this.root || !this.modal) return;
@@ -259,25 +256,30 @@ export class UI {
     }
   }
 
-  setWaiting(on) {
-    const el = $('#wait-banner');
-    el.textContent = on ? t('ui.waiting') : '';
-    $('#btn-wait').classList.toggle('on', on);
+  // Closing-eyes transition for sleeping and resting: lids close, the callback runs in the dark,
+  // then the eyes open again on the new scene.
+  eyes(text, cb) {
+    if (this.cinematic) return;
+    this.cinematic = true;
+    this.closeModalSilently();
+    const el = $('#eyes'), tx = el.querySelector('.eyes-text');
+    tx.textContent = text || '';
+    el.classList.add('on');
+    requestAnimationFrame(() => el.classList.add('closed'));
+    Audio.play('sleep');
+    setTimeout(() => el.classList.add('show-text'), 1100);
+    setTimeout(() => {
+      try { cb(); } catch (e) { console.error(e); }
+      setTimeout(() => {
+        el.classList.remove('show-text', 'closed');
+        setTimeout(() => { el.classList.remove('on'); this.cinematic = false; }, 1200);
+      }, 900);
+    }, 1900);
   }
 
-  areaBanner(text) {
-    if (!text) return;
-    const el = $('#area-banner');
-    el.textContent = text;
-    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
-  }
-
-  // Location line under the clock + nameplate above a nearby house door.
+  // Nameplate above a nearby house door, so you know whose house it is before going in.
   _updateLocation(game) {
     const area = game.playerArea();
-    const name = game.areaName(area) || '';
-    const loc = $('#hud-loc');
-    if (loc.textContent !== name) loc.textContent = name;
     const lab = $('#door-label');
     let best = null;
     if (area.outdoor && !this.modal) {
@@ -465,9 +467,10 @@ export class UI {
       money.replaceChildren(coin(game.money));
       body.innerHTML = '';
       body.append(h('p', { class: 'help', text: marigold.gnomed ? t('shop.honor') : t('shop.greet') }));
+      if (this._giftShown) body.append(h('p', { class: 'news good', text: t('shop.gift') }));
       if (tab === 'buy') {
         const rows = SHOP_STOCK.map((id) => h('div', { class: 'item-row' }, icon(id),
-          h('div', { class: 'grow' }, h('div', { class: 'name', text: itemName(id) }), h('div', { class: 'desc', text: t(`item.${id}.desc`) })),
+          h('div', { class: 'grow' }, h('div', { class: 'name', text: ITEMS[id].pack ? `${itemName(id)} ×${ITEMS[id].pack}` : itemName(id) }), h('div', { class: 'desc', text: t(`item.${id}.desc`) })),
           h('span', { class: 'price' }, coin(ITEMS[id].price)),
           h('button', { class: 'btn small', disabled: game.money < ITEMS[id].price, onclick: () => { if (game.buy(id)) this.toast(t('msg.bought', { item: itemName(id) })); render(); } }, t('shop.buyTab'))));
         rows.push(h('div', { class: 'item-row' }, icon('backpack'),
@@ -478,7 +481,7 @@ export class UI {
       } else {
         let any = false;
         game.inv.slots.forEach((s, i) => {
-          if (!s || !game.sellValue(s.id)) return;
+          if (!s || !game.sellable(s.id)) return;
           any = true;
           body.append(h('div', { class: 'item-row' }, icon(s.id),
             h('div', { class: 'grow' }, h('div', { class: 'name', text: `${itemName(s.id)} ×${s.qty}` })),
@@ -490,11 +493,14 @@ export class UI {
       }
       tabs.querySelectorAll('.tab').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
     };
+    this._giftShown = false;
     const tabs = h('div', { class: 'tabs' },
       h('button', { class: 'tab', 'data-tab': 'buy', onclick: () => { tab = 'buy'; render(); } }, t('shop.buyTab')),
       h('button', { class: 'tab', 'data-tab': 'sell', onclick: () => { tab = 'sell'; render(); } }, t('shop.sellTab')));
     render();
+    const gift = game.claimStarter();
     game.tut('shop');
+    if (gift) { this.toast(t('shop.giftToast'), 'clue'); this._giftShown = true; render(); }
     this.open('shop', this.panel(t('shop.title'), body, null, { tabs, headExtra: money }));
   }
 
@@ -506,7 +512,7 @@ export class UI {
       left.append(h('h3', { text: t('bag.title') }));
       let any = false;
       game.inv.slots.forEach((s, i) => {
-        if (!s || !game.sellValue(s.id) || ITEMS[s.id].type === 'tool') return;
+        if (!s || !game.sellable(s.id)) return;
         any = true;
         left.append(h('div', { class: 'item-row' }, icon(s.id), h('div', { class: 'grow' }, `${itemName(s.id)} ×${s.qty}`),
           h('span', { class: 'price' }, coin(game.sellValue(s.id) * s.qty)),
@@ -525,6 +531,7 @@ export class UI {
 
   // ------------------------------------------------------------ workbench
   openCraft(game) {
+    game.tut('workbench');
     const body = h('div');
     const render = () => {
       body.innerHTML = '';

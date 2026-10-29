@@ -45,6 +45,8 @@ export default {
 
   fishing: { wait: "Waiting for a bite… (E reels in)", bite: "A bite! Press E!", reel: "Press E when the marker is in the green!" },
 
+  cinematic: { sleep: "Zzz…", rest: "Five hours later…", passOut: "You can't keep your eyes open…" },
+
   lang: { en: "English", it: "Italiano", es: "Español", pt: "Português", fr: "Français", de: "Deutsch" },
 
   achievement: {
@@ -106,7 +108,7 @@ export default {
 
   tutorial: {
     follow: "➜ Follow the yellow arrow on screen.",
-    short: { exit: "Exit the house", clear: "Clear the weeds", till: "Till the soil", plant: "Plant seeds", water: "Water the seeds", ship: "Shipping bin", talk: "Talk to a villager", shop: "General store", notebook: "Open the Notebook (Tab)", sleep: "Go to bed", inspect: "Inspect the sparkles", ask: "Ask about the gnomings", lectern: "Accusation lectern", craft: "Workbench: craft a charm", charm: "Give a charm" },
+    short: { exit: "Exit the house", clear: "Clear the weeds", till: "Till the soil", plant: "Plant seeds", water: "Water the seeds", ship: "Shipping bin", talk: "Talk to a villager", shop: "General store: free seeds", notebook: "Open the Notebook (Tab)", sleep: "Go to bed", inspect: "Inspect the sparkles", ask: "Ask about the gnomings", lectern: "Accusation lectern", craft: "Workbench: craft a charm", charm: "Give a charm", workbench: "Look at the workbench", rest: "Rest on the bench" },
     title_farm: 'Farm basics {n}/{total}',
     title_detective: 'Detective {n}/{total}',
     skip: 'Skip these objectives',
@@ -119,7 +121,7 @@ export default {
     water: 'Select the watering can (slot 2) and water your seeds. Refill it at the river, well or fountain.',
     ship: 'Open the shipping bin next to your house and put something in it: it is sold overnight.',
     talk: 'Cross the bridge to the village square and talk to a villager (face them and press E).',
-    shop: 'Visit Pepperpot\'s General Store (9:00-17:00) and talk to the counter: buy seeds, sell crops.',
+    shop: "Go to Pepperpot's General Store in the village (opens at 8:00) and talk to the counter: Marigold gives you your first seeds for free.",
     notebook: 'Open your Notebook (Tab or N, or the book button) to see suspects and clues.',
     sleep: 'Go home and sleep in your bed to save and start a new day.',
     inspect: 'Someone was gnomed! Go to the gnome statue and inspect the sparkles nearby (E): they are clues.',
@@ -127,12 +129,15 @@ export default {
     lectern: 'This is how you win: when you know who the Gnomer is, go to the Town Hall (north of the square, 8:00-20:00) and use the Accusation Lectern. Visit it now to see it (you can cancel).',
     craft: 'Protect the next victim: at the workbench next to your house, craft a Garlic Garland (2 garlic + 1 turnip).',
     charm: 'Give the charm to whoever you think the Gnomer will pick next (talk to them, "Give a gift…").',
+    workbench: "Have a look at the workbench next to your house: here you turn crops into charms that protect villagers from the Gnomer.",
+    rest: "Tired? Sit on the bench in front of your house (E): five hours pass and your energy comes back in full.",
   },
 
   days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
   weather: { sunny: 'Sunny', cloudy: 'Cloudy', rain: 'Rainy' },
 
   prompt: {
+    rest: "Rest on the bench",
     fish: "Fish",
     feedCat: "Give the fish to the cat",
     talk: 'Talk to {name}',
@@ -174,11 +179,15 @@ export default {
     garlic: { name: 'Garlic', desc: 'Smells like protection. And garlic.' },
     pumpkin: { name: 'Pumpkin', desc: 'Large, orange and extremely autumnal.' },
     cranberry: { name: 'Cranberries', desc: 'Tart, red and very good at bouncing.' },
-    fishing_rod: { name: "Fishing Rod", desc: "Face the river and press E to cast. Wait for the bite, then stop the marker in the green." },
+    fishing_rod: { name: "Fishing Rod", desc: "Face the river and press E to cast (uses one bait). Wait for the bite, then stop the marker in the green." },
     mudminnow: { name: "Mudminnow", desc: "A small, cheerful fish. Smells of the river bed." },
     river_perch: { name: "River Perch", desc: "Stripy and proud. The Captain's favourite." },
     silver_eel: { name: "Silver Eel", desc: "Only bites after dark. Wriggly." },
     golden_carp: { name: "Golden Carp", desc: "Rare and gleaming. Bites more often in the rain." },
+    bait: { name: "Bait", desc: "Juicy worms for fishing. Each cast uses one. Sold in packs of 5." },
+    tin_can: { name: "Empty Can", desc: "Rusty and dented. Worth nothing." },
+    old_boot: { name: "Old Boot", desc: "Someone's lost boot. Smells of river." },
+    soggy_paper: { name: "Soggy Newspaper", desc: "Yesterday's news, very wet." },
     tea_tin: { name: 'Tin of Tea', desc: 'Smoky black tea. A classic gift.' },
     aster_bouquet: { name: 'Aster Bouquet', desc: 'Purple autumn flowers, tied with string.' },
     hard_cheese: { name: 'Hard Cheese', desc: 'Aged for a year in a cave. Allegedly.' },
@@ -188,12 +197,16 @@ export default {
   },
 
   msg: {
+    junkCaught: "You fished out… {item}. Lovely.",
+    needBait: "You need bait to fish. Buy some at the store.",
+    rested: "You feel completely refreshed!",
+    restTooLate: "It's too late to rest out here. Go to bed!",
     fishWhere: "Face the river to cast your line.",
     fishCancel: "You reel in your line.",
     fishEscaped: "It got away!",
     fishTooSoon: "Too soon! Wait for the bite.",
     fishCaught: "You caught a {item}!",
-    catFriend: "The cat adores you! It will follow you for two days and let you pet it more often.",
+    catFriend: "The cat adores you! It will follow you until you go to bed and let you pet it more often.",
     prowlTime: "22:30 – somewhere out there, the Gnomer is sneaking about…",
     tooTired: 'You are too tired. Time for bed.',
     canEmpty: 'The watering can is empty. Refill it at the river, well or fountain.',
@@ -207,10 +220,10 @@ export default {
     needTilled: 'Seeds need tilled soil.',
     harvested: '+1 {item}',
     cleared: 'Cleared!',
-    locked_store: 'The store is closed. Open 9:00-17:00, closed Sundays.',
+    locked_store: 'The store is closed. Open 8:00-17:00, closed Sundays.',
     locked_hall: 'The town hall is closed. Office hours 8:00-20:00.',
     locked_house: 'Locked. It\'s too late (or too early) to visit.',
-    shopClosed: 'The till is closed. Come back between 9:00 and 17:00 (not on Sundays).',
+    shopClosed: 'The till is closed. Come back between 8:00 and 17:00 (not on Sundays).',
     lateWarning: 'It\'s getting very late. Head to bed before 2:00!',
     midnight: 'Midnight. Your bed is calling.',
     crafted: 'Crafted: {item}',
@@ -244,14 +257,14 @@ export default {
     title: 'How to play',
     lines: [
       'Move with WASD or the arrow keys (touch: drag the left side of the screen).',
-      "Fishing: buy a rod at the store, face the river and press E. When you see \"!\" press E, then press E again with the marker in the green. Give a fish to a cat and it follows you for two days.",
+      "Fishing: buy a rod and bait at the store, face the river and press E. When you see \"!\" press E, then press E again with the marker in the green. Sometimes you fish out junk: sell or ship it for 0 to get rid of it. Give a fish to a cat and it follows you until bedtime.",
       'E or Space uses the selected tool, or talks/interacts with whatever you face. You can also click the world with the mouse.',
       'Talk to villagers once a day to make friends. Choose "Give a gift…" while chatting to hand over presents or charms (one present per villager per day).',
       'Pick hotbar slots with 1-5, the mouse wheel, or by tapping them. Open the Bag (I) to rearrange items.',
       'Menus work with the keyboard too: arrows/WASD to move, E or Space to choose, Esc to close.',
       'Gamepad: left stick or d-pad to move, A use, B back/pause, X bag, Y notebook, LB/RB hotbar.',
       'Farming: clear debris with the scythe, till with the hoe, plant seeds, and water every day. Rain waters for you.',
-      'Put crops in the shipping bin to sell them overnight, or sell them at the store (9:00-17:00, closed Sundays).',
+      'Put crops in the shipping bin to sell them overnight, or sell them at the store (8:00-17:00, closed Sundays).',
       'Sleep in your bed to save and start a new day. Stay up past 2:00 and you will pass out (and lose some gold).',
       'HOW TO WIN: find out who the Gnomer is, then go to the Town Hall (north of the square, open 8:00-20:00) and use the Accusation Lectern. Choose the right villager and the case is closed.',
       'Someone is gnoming villagers every few nights. Inspect sparkles at gnome sites, chat with villagers (Ask about the gnomings), and search houses while their owners are out.',
@@ -325,7 +338,7 @@ export default {
   board: {
     title: 'Mildew Hollow Notice Board',
     empty: 'LOST: one cat. FOUND: one cat (different). Otherwise, nothing to report.',
-    store: 'GENERAL STORE: open 9:00-17:00. Closed Sundays. — M. Pepperpot',
+    store: 'GENERAL STORE: open 8:00-17:00. Closed Sundays. — M. Pepperpot',
     hall: 'TOWN HALL: If you know who the Gnomer is, use the Accusation Lectern. Please be sure. — Mayor Quill',
   },
 
@@ -352,6 +365,8 @@ export default {
   },
 
   shop: {
+    gift: "Welcome to Mildew Hollow! Here are some turnip and garlic seeds, on the house. Just this once!",
+    giftToast: "Marigold gave you free seeds!",
     title: 'Pepperpot\'s General Store',
     buyTab: 'Buy',
     sellTab: 'Sell',
@@ -716,7 +731,7 @@ export default {
       name: 'Marigold Pepperpot', short: 'Marigold', title: 'Shopkeeper',
       bio: 'Runs the general store. Counts everything twice. Anxious, honest, completely un-gnome-like.',
       lines: {
-        hi1: 'Welcome! Store hours are nine to five, closed Sundays. I counted the hours. Twice.',
+        hi1: 'Welcome! Store hours are eight to five, closed Sundays. I counted the hours. Twice.',
         hi2: 'If you sell me turnips, I\'ll count them. Twice. It\'s nothing personal.',
         hi3: 'I balanced the books today. They balanced. I cried a little.',
         rain: 'Rain makes the floor squeak. I count the squeaks.',

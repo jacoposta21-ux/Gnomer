@@ -44,6 +44,8 @@ export default {
 
   fishing: { wait: "En attente d'une touche… (E pour remonter)", bite: "Ça mord ! Appuyez sur E !", reel: "Appuyez sur E quand le curseur est dans le vert !" },
 
+  cinematic: { sleep: "Zzz…", rest: "Cinq heures plus tard…", passOut: "Vous n'arrivez plus à garder les yeux ouverts…" },
+
   lang: { en: "English", it: "Italiano", es: "Español", pt: "Português", fr: "Français", de: "Deutsch" },
 
   achievement: {
@@ -105,7 +107,7 @@ export default {
 
   tutorial: {
     follow: "➜ Suivez la flèche jaune à l'écran.",
-    short: { exit: "Sortez de la maison", clear: "Enlevez les mauvaises herbes", till: "Labourez la terre", plant: "Plantez des graines", water: "Arrosez les graines", ship: "Bac d'expédition", talk: "Parlez à un villageois", shop: "Bazar", notebook: "Ouvrez le Carnet (Tab)", sleep: "Allez dormir", inspect: "Examinez les scintillements", ask: "Questions sur les gnomisations", lectern: "Pupitre des accusations", craft: "Établi : fabriquez un talisman", charm: "Offrez un talisman" },
+    short: { exit: "Sortez de la maison", clear: "Enlevez les mauvaises herbes", till: "Labourez la terre", plant: "Plantez des graines", water: "Arrosez les graines", ship: "Bac d'expédition", talk: "Parlez à un villageois", shop: "Bazar : graines offertes", notebook: "Ouvrez le Carnet (Tab)", sleep: "Allez dormir", inspect: "Examinez les scintillements", ask: "Questions sur les gnomisations", lectern: "Pupitre des accusations", craft: "Établi : fabriquez un talisman", charm: "Offrez un talisman", workbench: "Regardez l'établi", rest: "Reposez-vous sur le banc" },
     title_farm: "Bases de la ferme {n}/{total}",
     title_detective: "Détective {n}/{total}",
     skip: "Passer ces objectifs",
@@ -118,7 +120,7 @@ export default {
     water: "Choisissez l'arrosoir (case 2) et arrosez vos graines. On le remplit à la rivière, au puits ou à la fontaine.",
     ship: "Ouvrez le bac d'expédition à côté de la maison et mettez-y quelque chose : c'est vendu pendant la nuit.",
     talk: "Traversez le pont jusqu'à la place et parlez à un villageois (placez-vous face à lui et appuyez sur E).",
-    shop: "Allez au Bazar Pepperpot (9:00-17:00) et utilisez le comptoir : achetez des graines, vendez vos récoltes.",
+    shop: "Allez au Bazar Pepperpot au village (ouvre à 8:00) et utilisez le comptoir : Marigold vous offre vos premières graines.",
     notebook: "Ouvrez votre Carnet (Tab ou N, ou le bouton livre) pour voir suspects et indices.",
     sleep: "Rentrez et dormez dans votre lit pour sauvegarder et commencer un nouveau jour.",
     inspect: "Quelqu'un a été gnomisé ! Allez à la statue du nain et examinez les scintillements autour (E) : ce sont des indices.",
@@ -126,12 +128,15 @@ export default {
     lectern: "Voici comment gagner : quand vous savez qui est le Gnomeur, allez à la Mairie (au nord de la place, 8:00-20:00) et utilisez le Pupitre des accusations. Allez le voir maintenant (vous pouvez annuler).",
     craft: "Protégez la prochaine victime : à l'établi près de la maison, fabriquez une Guirlande d'ail (2 ail + 1 navet).",
     charm: "Offrez le talisman à la personne que le Gnomeur choisira ensuite selon vous (parlez-lui, « Offrir un cadeau… »).",
+    workbench: "Jetez un œil à l'établi près de la maison : c'est là que vos récoltes deviennent des talismans qui protègent les villageois du Gnomeur.",
+    rest: "Fatigué ? Asseyez-vous sur le banc devant la maison (E) : cinq heures passent et votre énergie revient au maximum.",
   },
 
   days: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
   weather: { sunny: "Ensoleillé", cloudy: "Nuageux", rain: "Pluie" },
 
   prompt: {
+    rest: "Se reposer sur le banc",
     fish: "Pêcher",
     feedCat: "Donner le poisson au chat",
     talk: "Parler à {name}",
@@ -173,11 +178,15 @@ export default {
     garlic: { name: "Ail", desc: "Sent la protection. Et l'ail." },
     pumpkin: { name: "Citrouille", desc: "Grosse, orange et extrêmement automnale." },
     cranberry: { name: "Canneberges", desc: "Acidulées, rouges et très douées pour rebondir." },
-    fishing_rod: { name: "Canne à pêche", desc: "Placez-vous face à la rivière et appuyez sur E pour lancer. Attendez la touche, puis arrêtez le curseur dans le vert." },
+    fishing_rod: { name: "Canne à pêche", desc: "Placez-vous face à la rivière et appuyez sur E pour lancer (utilise un appât). Attendez la touche, puis arrêtez le curseur dans le vert." },
     mudminnow: { name: "Vairon de vase", desc: "Un petit poisson joyeux. Sent le fond de la rivière." },
     river_perch: { name: "Perche de rivière", desc: "Rayée et fière. La préférée du Capitaine." },
     silver_eel: { name: "Anguille argentée", desc: "Ne mord qu'à la nuit tombée. Glissante." },
     golden_carp: { name: "Carpe dorée", desc: "Rare et scintillante. Mord plus souvent sous la pluie." },
+    bait: { name: "Appât", desc: "Des vers bien juteux pour la pêche. Chaque lancer en utilise un. Vendus par paquets de 5." },
+    tin_can: { name: "Canette vide", desc: "Rouillée et cabossée. Ne vaut rien." },
+    old_boot: { name: "Vieille botte", desc: "La botte perdue de quelqu'un. Sent la rivière." },
+    soggy_paper: { name: "Journal détrempé", desc: "Les nouvelles d'hier, bien mouillées." },
     tea_tin: { name: "Boîte de thé", desc: "Thé noir fumé. Un cadeau classique." },
     aster_bouquet: { name: "Bouquet d'asters", desc: "Fleurs d'automne violettes, nouées avec de la ficelle." },
     hard_cheese: { name: "Fromage affiné", desc: "Affiné un an dans une grotte. Paraît-il." },
@@ -187,12 +196,16 @@ export default {
   },
 
   msg: {
+    junkCaught: "Vous avez pêché… {item}. Charmant.",
+    needBait: "Il vous faut des appâts pour pêcher. Achetez-en à la boutique.",
+    rested: "Vous vous sentez parfaitement reposé !",
+    restTooLate: "Il est trop tard pour se reposer dehors. Au lit !",
     fishWhere: "Placez-vous face à la rivière pour lancer la ligne.",
     fishCancel: "Vous remontez la ligne.",
     fishEscaped: "Il s'est échappé !",
     fishTooSoon: "Trop tôt ! Attendez la touche.",
     fishCaught: "Vous avez pêché : {item} !",
-    catFriend: "Le chat vous adore ! Il vous suivra pendant deux jours et se laissera caresser plus souvent.",
+    catFriend: "Le chat vous adore ! Il vous suivra jusqu'à ce que vous alliez dormir et se laissera caresser plus souvent.",
     prowlTime: "22:30 – quelque part, le Gnomeur rôde dans le noir…",
     tooTired: "Vous êtes trop fatigué. Au lit !",
     canEmpty: "L'arrosoir est vide. Remplissez-le à la rivière, au puits ou à la fontaine.",
@@ -206,10 +219,10 @@ export default {
     needTilled: "Les graines ont besoin d'une terre labourée.",
     harvested: "+1 {item}",
     cleared: "Nettoyé !",
-    locked_store: "La boutique est fermée. Ouverte de 9:00 à 17:00, fermée le dimanche.",
+    locked_store: "La boutique est fermée. Ouverte de 8:00 à 17:00, fermée le dimanche.",
     locked_hall: "La mairie est fermée. Horaires : 8:00-20:00.",
     locked_house: "Fermé à clé. Il est trop tard (ou trop tôt) pour une visite.",
-    shopClosed: "La caisse est fermée. Revenez entre 9:00 et 17:00 (pas le dimanche).",
+    shopClosed: "La caisse est fermée. Revenez entre 8:00 et 17:00 (pas le dimanche).",
     lateWarning: "Il est très tard. Couchez-vous avant 2:00 !",
     midnight: "Minuit. Votre lit vous appelle.",
     crafted: "Fabriqué : {item}",
@@ -243,14 +256,14 @@ export default {
     title: "Comment jouer",
     lines: [
       "Déplacez-vous avec WASD ou les flèches (tactile : faites glisser le doigt sur la moitié gauche de l'écran).",
-      "Pêche : achetez une canne à la boutique, placez-vous face à la rivière et appuyez sur E. Quand « ! » apparaît, appuyez sur E, puis encore sur E avec le curseur dans le vert. Offrez un poisson à un chat et il vous suivra deux jours.",
+      "Pêche : achetez une canne et des appâts à la boutique, placez-vous face à la rivière et appuyez sur E. Quand « ! » apparaît, appuyez sur E, puis encore sur E avec le curseur dans le vert. Parfois vous remontez des déchets : vendez-les ou expédiez-les pour 0 pour vous en débarrasser. Offrez un poisson à un chat et il vous suivra jusqu'au coucher.",
       "E ou Espace utilisent l'outil choisi, ou parlent/interagissent avec ce qui est devant vous. Vous pouvez aussi cliquer sur le monde.",
       "Parlez aux villageois une fois par jour pour vous faire des amis. Choisissez « Offrir un cadeau… » pendant la discussion pour donner cadeaux ou talismans (un cadeau par villageois et par jour).",
       "Choisissez les cases de la barre avec 1-5, la molette ou en les touchant. Ouvrez le Sac (I) pour réorganiser vos objets.",
       "Les menus fonctionnent aussi au clavier : flèches/WASD pour se déplacer, E ou Espace pour choisir, Échap pour fermer.",
       "Manette : stick gauche ou croix pour bouger, A utiliser, B retour/pause, X sac, Y carnet, LB/RB barre.",
       "Ferme : enlevez les débris à la faux, labourez à la houe, semez et arrosez chaque jour. La pluie arrose à votre place.",
-      "Mettez vos récoltes dans le bac d'expédition pour les vendre pendant la nuit, ou vendez-les à la boutique (9:00-17:00, fermée le dimanche).",
+      "Mettez vos récoltes dans le bac d'expédition pour les vendre pendant la nuit, ou vendez-les à la boutique (8:00-17:00, fermée le dimanche).",
       "Dormez dans votre lit pour sauvegarder et commencer un nouveau jour. Si vous veillez après 2:00, vous vous évanouissez (et perdez un peu d'or).",
       "COMMENT GAGNER : découvrez qui est le Gnomeur, puis allez à la Mairie (au nord de la place, ouverte 8:00-20:00) et utilisez le Pupitre des accusations. Choisissez le bon villageois et l'affaire est classée.",
       "Quelqu'un gnomise un villageois toutes les quelques nuits. Examinez les scintillements près des nains, interrogez les villageois (« Poser des questions sur les gnomisations ») et fouillez les maisons quand leurs propriétaires sont sortis.",
@@ -324,7 +337,7 @@ export default {
   board: {
     title: "Panneau d'affichage de Mildew Hollow",
     empty: "PERDU : un chat. TROUVÉ : un chat (un autre). À part ça, rien à signaler.",
-    store: "BAZAR : ouvert 9:00-17:00. Fermé le dimanche. — M. Pepperpot",
+    store: "BAZAR : ouvert 8:00-17:00. Fermé le dimanche. — M. Pepperpot",
     hall: "MAIRIE : si vous savez qui est le Gnomeur, utilisez le Pupitre des accusations. Soyez sûrs de vous, s'il vous plaît. — Le maire Quill",
   },
 
@@ -351,6 +364,8 @@ export default {
   },
 
   shop: {
+    gift: "Bienvenue à Mildew Hollow ! Voici des graines de navet et d'ail, offertes par la maison. Juste cette fois !",
+    giftToast: "Marigold vous a offert des graines !",
     title: "Bazar Pepperpot",
     buyTab: "Acheter",
     sellTab: "Vendre",
@@ -709,7 +724,7 @@ export default {
       name: "Marigold Pepperpot", short: "Marigold", title: "Commerçante",
       bio: "Tient le bazar. Compte tout deux fois. Anxieuse, honnête et pas du tout du genre nain.",
       lines: {
-        hi1: "Bienvenue ! La boutique ouvre de neuf heures à dix-sept heures, fermée le dimanche. J'ai compté les heures. Deux fois.",
+        hi1: "Bienvenue ! La boutique ouvre de huit heures à dix-sept heures, fermée le dimanche. J'ai compté les heures. Deux fois.",
         hi2: "Si vous me vendez des navets, je les compterai. Deux fois. Ce n'est pas personnel.",
         hi3: "J'ai fait mes comptes aujourd'hui. Ils tombaient juste. J'ai un peu pleuré.",
         rain: "Avec la pluie, le plancher grince. Je compte les grincements.",

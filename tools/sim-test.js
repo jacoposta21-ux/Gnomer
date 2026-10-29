@@ -16,7 +16,7 @@ const { DAY_END } = await import('../js/time.js');
 function makeGame() {
   const ui = {
     blocking: false, endings: [], toasts: [], last: null,
-    toast(m) { this.toasts.push(m); }, fishBar() {}, setWaiting() {}, areaBanner() {}, say(w, text) { this.last = text; }, flash() {}, setPrompt() {}, handleActions() {},
+    toast(m) { this.toasts.push(m); }, fishBar() {}, eyes(text, cb) { cb(); }, say(w, text) { this.last = text; }, flash() {}, setPrompt() {}, handleActions() {},
     dialogue(pages, done) { this.last = pages.map((p) => p.text).join(' / '); if (done) done(); },
     confirm(text, y, n, onYes) { onYes(); }, showMorning() {}, showEnding(type) { this.endings.push(type); },
     openBin() {}, openCraft() {}, openBoard() {}, openShop() {}, openAccuse() {}, openNotebook() {}, openBag() {}, openPause() {},
@@ -296,35 +296,50 @@ assert.ok(results.minEvidenceBeforeLoss >= 4, 'a diligent player always has at l
 // 14) Fishing, cat companion, quiet nights, waiting
 {
   const { game } = makeGame(); game.newGame();
-  game.money = 1000; assert.ok(game.buy('fishing_rod'));
+  game.money = 1000; assert.ok(game.buy('fishing_rod')); assert.ok(game.buy('bait'));
+  assert.equal(game.inv.count('bait'), 5, 'bait comes in packs of 5');
   const water = { x: 29, y: 30 };
   game.startFishing(water);
   assert.equal(game.fishing.phase, 'wait');
   game._fishUpdate(10); assert.equal(game.fishing.phase, 'bite', 'a fish bites');
   game._fishInput(); assert.equal(game.fishing.phase, 'reel');
   game.fishing.pos = game.fishing.center; game._fishInput();
-  const fish = ['mudminnow', 'river_perch', 'silver_eel', 'golden_carp'].reduce((n, id) => n + game.inv.count(id), 0);
-  assert.equal(fish, 1, 'caught a fish'); assert.equal(game.fishing, null);
+  const fish = ['mudminnow', 'river_perch', 'silver_eel', 'golden_carp', 'tin_can', 'old_boot', 'soggy_paper'].reduce((n, id) => n + game.inv.count(id), 0);
+  assert.equal(fish, 1, 'caught something'); assert.equal(game.fishing, null);
   game.startFishing(water); game._fishInput(); assert.equal(game.fishing, null, 'reeling in too soon cancels');
+  assert.equal(game.inv.count('bait'), 3, 'each cast uses one bait');
+  game.inv.remove('bait', 3); game.startFishing(water); assert.equal(game.fishing, undefined ?? game.fishing, game.fishing); assert.ok(!game.fishing, 'no bait, no fishing');
 
   game.inv.add('mudminnow', 1);
   const cat = game.cats[0];
   game.feedCat(cat, 'mudminnow');
-  assert.equal(cat.friendUntil, game.day + 2);
+  assert.equal(cat.friendUntil, game.day + 1);
   const fh = game.world.areaById.farmhouse;
   game.player.placeAt(fh.x + 3, fh.y + 4, 'down');
   for (let i = 0; i < 60; i++) game._tick(1 / 60);
   assert.equal(cat.area, game.playerArea(), 'companion cat follows the player indoors');
   game.energy = 50; for (let i = 0; i < 3; i++) game.petCat(cat); assert.equal(game.energy, 65, 'companion can be petted 3 times');
   game.petCat(cat); assert.equal(game.energy, 65);
-  game.sleep(false); game.sleep(false);
-  assert.ok(cat.friendUntil <= game.day, 'companionship lasts two days');
+  game.sleep(false);
+  assert.ok(cat.friendUntil <= game.day, 'the cat goes home when you go to bed');
+  // junk can be shipped for 0 to get rid of it
+  game.inv.add('tin_can', 1); game.shipSlot(game.inv.slots.findIndex((x) => x && x.id === 'tin_can'));
+  assert.equal(game.inv.count('tin_can'), 0, 'junk can be shipped');
+  // free starter seeds only through the tutorial
+  const { game: g3 } = makeGame(); g3.newGame();
+  assert.equal(g3.inv.count('seed_turnip'), 0, 'start with tools only');
+  assert.ok(g3.claimStarter() && g3.inv.count('seed_turnip') > 0, 'tutorial gives free seeds');
+  assert.ok(!g3.claimStarter(), 'only once');
+  const { game: g4 } = makeGame(); g4.newGame(); g4.flags.tutSkip = true;
+  assert.ok(!g4.claimStarter(), 'no free seeds without the tutorial');
+  // resting on a bench: +5h, full energy
+  g4.energy = 10; const m1 = g4.minutes; g4.rest();
+  assert.equal(g4.minutes, m1 + 300); assert.equal(g4.energy, g4.maxEnergy);
 
   const { game: g2 } = makeGame(); g2.newGame();
   g2.mystery.nextAttack = 99; g2.minutes = 21 * 60; const m0 = g2.minutes; g2._tick(1);
   assert.ok(g2.minutes - m0 > 4, 'quiet nights pass faster');
-  g2.startWaiting(); assert.ok(g2.waiting); g2.stopWaiting(); assert.ok(!g2.waiting);
-  console.log('fishing, cat, nights, waiting: ok');
+  console.log('fishing, bait, junk, cat, starter seeds, bench rest: ok');
 }
 
 // 12) Every translation has the same keys and {placeholders} as English

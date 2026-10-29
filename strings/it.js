@@ -45,6 +45,8 @@ export default {
 
   fishing: { wait: "Aspetti che abbocchi… (E per ritirare)", bite: "Abbocca! Premi E!", reel: "Premi E quando il cursore è nel verde!" },
 
+  cinematic: { sleep: "Zzz…", rest: "Cinque ore dopo…", passOut: "Non riesci più a tenere gli occhi aperti…" },
+
   lang: { en: "English", it: "Italiano", es: "Español", pt: "Português", fr: "Français", de: "Deutsch" },
 
   achievement: {
@@ -106,7 +108,7 @@ export default {
 
   tutorial: {
     follow: "➜ Segui la freccia gialla sullo schermo.",
-    short: { exit: "Esci di casa", clear: "Pulisci le erbacce", till: "Zappa il terreno", plant: "Pianta i semi", water: "Annaffia i semi", ship: "Cassetta spedizioni", talk: "Parla con un abitante", shop: "Emporio", notebook: "Apri il Taccuino (Tab)", sleep: "Vai a letto", inspect: "Esamina i luccichii", ask: "Chiedi delle gnomizzazioni", lectern: "Leggio delle accuse", craft: "Banco: crea un amuleto", charm: "Regala un amuleto" },
+    short: { exit: "Esci di casa", clear: "Pulisci le erbacce", till: "Zappa il terreno", plant: "Pianta i semi", water: "Annaffia i semi", ship: "Cassetta spedizioni", talk: "Parla con un abitante", shop: "Emporio: sementi in regalo", notebook: "Apri il Taccuino (Tab)", sleep: "Vai a letto", inspect: "Esamina i luccichii", ask: "Chiedi delle gnomizzazioni", lectern: "Leggio delle accuse", craft: "Banco: crea un amuleto", charm: "Regala un amuleto", workbench: "Guarda il banco da lavoro", rest: "Riposa sulla panchina" },
     title_farm: "Basi della fattoria {n}/{total}",
     title_detective: "Detective {n}/{total}",
     skip: "Salta questi obiettivi",
@@ -119,7 +121,7 @@ export default {
     water: "Seleziona l'annaffiatoio (casella 2) e annaffia i semi. Si ricarica al fiume, al pozzo o alla fontana.",
     ship: "Apri la cassetta spedizioni accanto a casa e mettici qualcosa: verrà venduto durante la notte.",
     talk: "Attraversa il ponte fino alla piazza e parla con un abitante (mettiti davanti e premi E).",
-    shop: "Vai all'Emporio Pepperpot (9:00-17:00) e usa il bancone: compra semi, vendi il raccolto.",
+    shop: "Vai all'Emporio Pepperpot in paese (apre alle 8:00) e usa il bancone: Marigold ti regala le prime sementi.",
     notebook: "Apri il Taccuino (Tab o N, oppure il pulsante a forma di libro) per vedere sospettati e indizi.",
     sleep: "Torna a casa e dormi nel letto per salvare e iniziare un nuovo giorno.",
     inspect: "Qualcuno è stato gnomizzato! Vai alla statua del nano ed esamina i luccichii lì vicino (E): sono indizi.",
@@ -127,12 +129,15 @@ export default {
     lectern: "Ecco come si vince: quando sai chi è lo Gnomatore, vai in Municipio (a nord della piazza, 8:00-20:00) e usa il Leggio delle accuse. Visitalo ora per vederlo (puoi annullare).",
     craft: "Proteggi la prossima vittima: al banco da lavoro accanto a casa crea una Ghirlanda d'aglio (2 aglio + 1 rapa).",
     charm: "Regala l'amuleto a chi pensi che lo Gnomatore sceglierà come prossima vittima (parlaci, «Fai un regalo…»).",
+    workbench: "Dai un'occhiata al banco da lavoro accanto a casa: qui trasformi i raccolti in amuleti che proteggono gli abitanti dallo Gnomatore.",
+    rest: "Stanco? Siediti sulla panchina davanti a casa (E): passano cinque ore e l'energia torna al massimo.",
   },
 
   days: ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
   weather: { sunny: "Sole", cloudy: "Nuvoloso", rain: "Pioggia" },
 
   prompt: {
+    rest: "Riposa sulla panchina",
     fish: "Pesca",
     feedCat: "Dai il pesce al gatto",
     talk: "Parla con {name}",
@@ -174,11 +179,15 @@ export default {
     garlic: { name: "Aglio", desc: "Profuma di protezione. E di aglio." },
     pumpkin: { name: "Zucca", desc: "Grande, arancione ed estremamente autunnale." },
     cranberry: { name: "Mirtilli rossi", desc: "Aspri, rossi e bravissimi a rimbalzare." },
-    fishing_rod: { name: "Canna da pesca", desc: "Mettiti davanti al fiume e premi E per lanciare. Aspetta l'abboccata, poi ferma il cursore nel verde." },
+    fishing_rod: { name: "Canna da pesca", desc: "Mettiti davanti al fiume e premi E per lanciare (usa un'esca). Aspetta l'abboccata, poi ferma il cursore nel verde." },
     mudminnow: { name: "Pesciolino di fango", desc: "Un pesciolino allegro. Sa di fondale." },
     river_perch: { name: "Persico di fiume", desc: "A strisce e fiero. Il preferito del Capitano." },
     silver_eel: { name: "Anguilla argentata", desc: "Abbocca solo col buio. Sgusciante." },
     golden_carp: { name: "Carpa dorata", desc: "Rara e luccicante. Abbocca più spesso quando piove." },
+    bait: { name: "Esca", desc: "Vermi succosi per pescare. Ogni lancio ne usa una. Si vendono a confezioni da 5." },
+    tin_can: { name: "Lattina vuota", desc: "Arrugginita e ammaccata. Non vale niente." },
+    old_boot: { name: "Scarpone vecchio", desc: "Lo scarpone perso da qualcuno. Sa di fiume." },
+    soggy_paper: { name: "Giornale fradicio", desc: "Le notizie di ieri, bagnatissime." },
     tea_tin: { name: "Barattolo di tè", desc: "Tè nero affumicato. Un regalo classico." },
     aster_bouquet: { name: "Mazzo di astri", desc: "Fiori autunnali viola, legati con lo spago." },
     hard_cheese: { name: "Formaggio stagionato", desc: "Stagionato un anno in una grotta. Pare." },
@@ -188,12 +197,16 @@ export default {
   },
 
   msg: {
+    junkCaught: "Hai pescato… {item}. Che bellezza.",
+    needBait: "Ti servono le esche per pescare. Comprale all'emporio.",
+    rested: "Ti senti completamente riposato!",
+    restTooLate: "È troppo tardi per riposare qui fuori. Vai a letto!",
     fishWhere: "Mettiti davanti al fiume per lanciare la lenza.",
     fishCancel: "Ritiri la lenza.",
     fishEscaped: "È scappato!",
     fishTooSoon: "Troppo presto! Aspetta l'abboccata.",
     fishCaught: "Hai pescato: {item}!",
-    catFriend: "Il gatto ti adora! Ti seguirà per due giorni e potrai accarezzarlo più spesso.",
+    catFriend: "Il gatto ti adora! Ti seguirà fino a quando vai a dormire e potrai accarezzarlo più spesso.",
     prowlTime: "22:30 – da qualche parte, lo Gnomatore si aggira nel buio…",
     tooTired: "Sei troppo stanco. È ora di andare a letto.",
     canEmpty: "L'annaffiatoio è vuoto. Riempilo al fiume, al pozzo o alla fontana.",
@@ -207,10 +220,10 @@ export default {
     needTilled: "I semi vanno piantati nel terreno zappato.",
     harvested: "+1 {item}",
     cleared: "Pulito!",
-    locked_store: "Il negozio è chiuso. Aperto 9:00-17:00, chiuso la domenica.",
+    locked_store: "Il negozio è chiuso. Aperto 8:00-17:00, chiuso la domenica.",
     locked_hall: "Il municipio è chiuso. Orari d'ufficio 8:00-20:00.",
     locked_house: "Chiuso a chiave. È troppo tardi (o troppo presto) per una visita.",
-    shopClosed: "La cassa è chiusa. Torna tra le 9:00 e le 17:00 (non di domenica).",
+    shopClosed: "La cassa è chiusa. Torna tra le 8:00 e le 17:00 (non di domenica).",
     lateWarning: "Si è fatto tardissimo. Vai a letto prima delle 2:00!",
     midnight: "Mezzanotte. Il letto ti chiama.",
     crafted: "Creato: {item}",
@@ -244,14 +257,14 @@ export default {
     title: "Come si gioca",
     lines: [
       "Muoviti con WASD o le frecce (touch: trascina il dito sulla metà sinistra dello schermo).",
-      "Pesca: compra una canna al negozio, mettiti davanti al fiume e premi E. Quando vedi «!» premi E, poi premi di nuovo E con il cursore nel verde. Regala un pesce a un gatto e ti seguirà per due giorni.",
+      "Pesca: compra canna ed esche all'emporio, mettiti davanti al fiume e premi E. Quando vedi «!» premi E, poi di nuovo E con il cursore nel verde. A volte peschi spazzatura: vendila o spediscila per 0 per liberartene. Regala un pesce a un gatto e ti seguirà fino a quando vai a dormire.",
       "E o Spazio usano l'attrezzo selezionato, oppure parli/interagisci con ciò che hai davanti. Puoi anche cliccare sul mondo col mouse.",
       "Parla con gli abitanti una volta al giorno per fare amicizia. Scegli «Fai un regalo…» durante la chiacchierata per dare regali o amuleti (un regalo al giorno per abitante).",
       "Scegli le caselle della barra con 1-5, la rotella del mouse o toccandole. Apri la Borsa (I) per riordinare gli oggetti.",
       "I menu funzionano anche da tastiera: frecce/WASD per spostarti, E o Spazio per scegliere, Esc per chiudere.",
       "Gamepad: levetta sinistra o croce per muoverti, A usa, B indietro/pausa, X borsa, Y taccuino, LB/RB barra rapida.",
       "Coltivare: togli i detriti con la falce, zappa, pianta i semi e annaffia ogni giorno. Quando piove annaffia la pioggia.",
-      "Metti il raccolto nella cassetta spedizioni per venderlo durante la notte, oppure vendilo al negozio (9:00-17:00, chiuso la domenica).",
+      "Metti il raccolto nella cassetta spedizioni per venderlo durante la notte, oppure vendilo al negozio (8:00-17:00, chiuso la domenica).",
       "Dormi nel letto per salvare e iniziare un nuovo giorno. Se resti sveglio dopo le 2:00 svieni (e perdi un po' d'oro).",
       "COME SI VINCE: scopri chi è lo Gnomatore, poi vai in Municipio (a nord della piazza, aperto 8:00-20:00) e usa il Leggio delle accuse. Scegli l'abitante giusto e il caso è chiuso.",
       "Qualcuno gnomizza un abitante ogni poche notti. Esamina i luccichii vicino ai nani, chiedi agli abitanti («Chiedi delle gnomizzazioni») e fruga nelle case quando i proprietari sono fuori.",
@@ -325,7 +338,7 @@ export default {
   board: {
     title: "Bacheca di Mildew Hollow",
     empty: "PERSO: un gatto. TROVATO: un gatto (un altro). Per il resto, niente da segnalare.",
-    store: "EMPORIO: aperto 9:00-17:00. Chiuso la domenica. — M. Pepperpot",
+    store: "EMPORIO: aperto 8:00-17:00. Chiuso la domenica. — M. Pepperpot",
     hall: "MUNICIPIO: se sapete chi è lo Gnomatore, usate il Leggio delle accuse. Siate sicuri, per favore. — Sindaco Quill",
   },
 
@@ -352,6 +365,8 @@ export default {
   },
 
   shop: {
+    gift: "Benvenuto a Mildew Hollow! Ecco qualche seme di rapa e d'aglio, offre la casa. Solo per questa volta!",
+    giftToast: "Marigold ti ha regalato le prime sementi!",
     title: "Emporio Pepperpot",
     buyTab: "Compra",
     sellTab: "Vendi",
@@ -710,7 +725,7 @@ export default {
       name: "Marigold Pepperpot", short: "Marigold", title: "Negoziante",
       bio: "Gestisce l'emporio. Conta tutto due volte. Ansiosa, onesta, per niente da nano.",
       lines: {
-        hi1: "Benvenuto! Il negozio è aperto dalle nove alle cinque, chiuso la domenica. Ho contato le ore. Due volte.",
+        hi1: "Benvenuto! Il negozio è aperto dalle otto alle cinque, chiuso la domenica. Ho contato le ore. Due volte.",
         hi2: "Se mi vendi delle rape, le conto. Due volte. Non è niente di personale.",
         hi3: "Oggi ho fatto quadrare i conti. Quadravano. Ho pianto un pochino.",
         rain: "Con la pioggia il pavimento cigola. Conto i cigolii.",

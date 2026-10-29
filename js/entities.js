@@ -210,10 +210,11 @@ export class Cat {
   }
 
   // A befriended cat trots after the player (and hops through doors with them).
-  follow(dt, world, player, playerArea) {
+  follow(dt, world, player, playerArea, side = -1) {
     this.anim += dt;
     const back = { up: [0, 1], down: [0, -1], left: [1, 0], right: [-1, 0] }[player.dir];
-    const tx = player.x + back[0] * 14, ty = player.y + back[1] * 12;
+    // two companions walk side by side instead of on top of each other
+    const tx = player.x + back[0] * 14 + back[1] * side * 10, ty = player.y + back[1] * 12 + back[0] * side * 6;
     const d = Math.hypot(tx - this.x, ty - this.y);
     if (this.area !== playerArea || d > 140) { this.x = tx; this.y = ty; this.area = playerArea; this.moving = false; return; }
     if (d < 6) { this.moving = false; return; }

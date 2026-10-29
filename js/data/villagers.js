@@ -67,7 +67,7 @@ export const VILLAGERS = [
     look: { skin: '#f3d2b5', hair: '#c4572e', hairStyle: 'curly', shirt: '#d9a43a', pants: '#7d5a2c', hat: null, apron: '#6f8a5a', height: 0 },
     stats: { height: 160, wealth: 9 },
     loves: ['turnip', 'tea_tin'], likes: ['garlic'], dislikes: ['pumpkin', 'silver_eel'],
-    schedule: [['06:00', 'home'], ['08:45', 'store.counter'], ['17:15', 'bench_e'], ['20:00', 'home']],
+    schedule: [['06:00', 'home'], ['07:45', 'store.counter'], ['17:15', 'bench_e'], ['20:00', 'home']],
     lines: BASE_LINES,
   },
   {

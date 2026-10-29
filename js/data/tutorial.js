@@ -13,13 +13,13 @@ export const TUTORIAL = {
     { id: 'exit', target: { mat: 'farmhouse' } },
     { id: 'clear', target: { field: true } },
     { id: 'till', target: { field: true } },
+    { id: 'shop', target: { obj: 'counter' } },
     { id: 'plant', target: { field: true } },
     { id: 'water', target: { field: true } },
-    { id: 'ship', target: { obj: 'bin' } },
+    { id: 'workbench', target: { obj: 'workbench' } },
     { id: 'talk', target: { npc: true } },
-    { id: 'shop', target: { obj: 'counter' } },
     { id: 'notebook' },
-    { id: 'sleep', target: { obj: 'bed' } },
+    { id: 'rest', target: { obj: 'bench' } },
   ],
   // After the first gnoming: how to investigate and catch the Gnomer.
   detective: [

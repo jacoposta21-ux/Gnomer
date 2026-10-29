@@ -3,7 +3,7 @@
 const KEYMAP = {
   KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
   KeyE: 'action', Space: 'action', Enter: 'action', NumpadEnter: 'action',
-  Tab: 'notebook', KeyN: 'notebook', Escape: 'pause', KeyP: 'pause', KeyI: 'bag', KeyB: 'bag', KeyM: 'mute', KeyF: 'wait',
+  Tab: 'notebook', KeyN: 'notebook', Escape: 'pause', KeyP: 'pause', KeyI: 'bag', KeyB: 'bag', KeyM: 'mute',
   Digit1: 'hot0', Digit2: 'hot1', Digit3: 'hot2', Digit4: 'hot3', Digit5: 'hot4',
   Numpad1: 'hot0', Numpad2: 'hot1', Numpad3: 'hot2', Numpad4: 'hot3', Numpad5: 'hot4',
 };

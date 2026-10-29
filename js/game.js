@@ -8,7 +8,7 @@ import { Inventory, HOTBAR } from './inventory.js';
 import { Farm } from './farming.js';
 import { Mystery } from './mystery.js';
 import { pickLine, reactionLine, giftReaction } from './dialogue.js';
-import { ITEMS, BACKPACK, START_INVENTORY, START_MONEY, START_INV_SIZE } from './data/items.js';
+import { ITEMS, BACKPACK, START_INVENTORY, STARTER_SEEDS, START_MONEY, START_INV_SIZE } from './data/items.js';
 import { CROPS, DEBRIS } from './data/crops.js';
 import { RECIPES } from './data/recipes.js';
 import { TUTORIAL } from './data/tutorial.js';
@@ -23,7 +23,6 @@ import { Progress } from './progress.js';
 
 const STEP = 1 / 240; // fixed simulation step: identical behaviour at any refresh rate
 const MAX_ENERGY = 100;
-const WAIT_SPEED = 6;   // "Wait" fast-forwards the whole world this many times
 const NIGHT_CLOCK = 2;  // on quiet nights (no Gnomer about) the clock runs this much faster after 20:00
 
 export class Game {
@@ -53,7 +52,7 @@ export class Game {
     this.cats = MAP.cats.map(([color, ...rect]) => new Cat(color, rect));
     this.banterT = 6;
     this.quests = []; // villager requests: { npc, item, qty, due }
-    this.flags = { backpack: false, knownLoves: {}, introDone: false, tutDone: [], tutSkip: false };
+    this.flags = { backpack: false, knownLoves: {}, introDone: false, tutDone: [], tutSkip: false, starterGiven: false };
     this.stats = { earned: 0, harvested: 0 };
   }
 
@@ -90,6 +89,7 @@ export class Game {
     this.flags = { ...this.flags, ...(d.flags || {}) };
     this.quests = (d.quests || []).filter((q) => ITEMS[q.item] && this.npcs.has(q.npc));
     if (!d.flags || !d.flags.tutDone) this.flags.tutSkip = this.day > 1;
+    if (!d.flags || d.flags.starterGiven === undefined) this.flags.starterGiven = this.day > 1;
     this.stats = { ...this.stats, ...(d.stats || {}) };
     for (const [id, s] of Object.entries(d.npcs || {})) {
       const n = this.npcs.get(id);
@@ -119,11 +119,7 @@ export class Game {
     this.player.moving = false;
     for (const n of this.npcs.values()) { n.paused = false; n.snapToSchedule(this.world, this.minutes, this.weather); }
     this.fishing = null; this.ui.fishBar && this.ui.fishBar(null);
-    this.cats.forEach((c, i) => {
-      c.spawn(this.world);
-      c.friendUntil = (this.flags.catUntil && this.flags.catUntil[i]) || 0;
-      if (c.friendUntil > this.day) { c.x = this.player.x + 14; c.y = this.player.y; c.area = this.playerArea(); }
-    });
+    for (const c of this.cats) { c.spawn(this.world); c.friendUntil = 0; }
     this._warned = {};
     this.renderer.snap(this);
   }
@@ -315,15 +311,11 @@ export class Game {
       if (this.fishing) this._fishUpdate(dt);
       actions.length = 0;
     }
-    // waiting (fast-forward) stops as soon as the player does anything
-    if (this.waiting && (actions.some((a) => a !== 'wait') || Math.hypot(this.input.move.x, this.input.move.y) > 0.15)) this.stopWaiting();
     for (const a of actions) this._action(a);
-    if (this.ui.blocking || this.mode !== 'play') { this.stopWaiting(); return; } // an action may have opened a menu
+    if (this.ui.blocking || this.mode !== 'play') return; // an action may have opened a menu
 
-    this.acc += dt * (this.waiting ? WAIT_SPEED : 1);
-    let guard = 0;
-    while (this.acc >= STEP && guard++ < 400) { this.acc -= STEP; this._tick(STEP); if (this.mode !== 'play' || this.ui.blocking) { this.acc = 0; this.stopWaiting(); break; } }
-    if (guard >= 400) this.acc = 0;
+    this.acc += dt;
+    while (this.acc >= STEP) { this.acc -= STEP; this._tick(STEP); if (this.mode !== 'play' || this.ui.blocking) { this.acc = 0; break; } }
     this.renderer.updateCamera(dt, this);
     const cur = this.inv.current;
     this.showCursor = !!cur && ['tool', 'seed'].includes(ITEMS[cur.id].type);
@@ -339,11 +331,7 @@ export class Game {
     if (a === 'bag') { this.ui.openBag(this); return; }
     if (a === 'pause') { this.ui.openPause(this); return; }
     if (a === 'mute') this.ui.toggleMute();
-    if (a === 'wait') { if (this.waiting) this.stopWaiting(); else this.startWaiting(); }
   }
-
-  startWaiting() { this.waiting = true; this.input.clearHeld(); this.ui.setWaiting(true); }
-  stopWaiting() { if (!this.waiting) return; this.waiting = false; this.ui.setWaiting(false); }
 
   // The Gnomer only prowls on attack nights; other nights are skipped through faster.
   get quietNight() { return this.minutes >= 20 * 60 && (this.mystery.solved || this.day !== this.mystery.nextAttack || this.mystery.outcome); }
@@ -352,18 +340,14 @@ export class Game {
     const before = this.minutes;
     this.minutes += dt * MINUTES_PER_SECOND * (this.quietNight ? NIGHT_CLOCK : 1);
     const p = this.player;
-    p.update(dt, this.waiting || this.fishing ? { x: 0, y: 0 } : this.input.move, (x, y) => this._blockedForPlayer(x, y));
-    if (this.waiting && before < 22.5 * 60 && this.minutes >= 22.5 * 60 && this.day === this.mystery.nextAttack && !this.mystery.solved) {
-      this.stopWaiting();
-      this.ui.toast(t('msg.prowlTime'), 'warn');
-    }
+    p.update(dt, this.fishing ? { x: 0, y: 0 } : this.input.move, (x, y) => this._blockedForPlayer(x, y));
     if (p.bumped) this._onBump(p.bumped);
     this._checkPortal();
     for (const n of this.npcs.values()) n.update(dt, this.world, this.minutes, this.weather);
-    for (const c of this.cats) {
-      if (c.friendUntil > this.day) c.follow(dt, this.world, p, this.playerArea());
+    this.cats.forEach((c, i) => {
+      if (c.friendUntil > this.day) c.follow(dt, this.world, p, this.playerArea(), i % 2 ? 1 : -1);
       else c.update(dt, this.world);
-    }
+    });
     this._achT = (this._achT || 0) - dt;
     if (this._achT <= 0) { this._achT = 1; this.checkAchievements(); }
     this.banterT -= dt;
@@ -375,7 +359,7 @@ export class Game {
     if (before < 18 * 60 && this.minutes >= 18 * 60 && this.omenTonight) { this.ui.toast(t('msg.omen'), 'warn'); Audio.play('gnome'); }
     if (before < 24 * 60 && this.minutes >= 24 * 60) this.ui.toast(t('msg.midnight'));
     if (before < 25 * 60 && this.minutes >= 25 * 60) this.ui.toast(t('msg.lateWarning'), 'warn');
-    if (this.minutes >= DAY_END) this.sleep(true);
+    if (this.minutes >= DAY_END && !this.ui.cinematic) this.ui.eyes(t('cinematic.passOut'), () => this.sleep(true));
   }
 
   _blockedForPlayer(x, y) {
@@ -406,7 +390,6 @@ export class Game {
     if (portal.kind === 'door' && p.dir === 'up') {
       if (doorLocked(portal.lock, this.day, this.minutes)) return;
       p.placeAt(portal.to.x, portal.to.y, 'up');
-      this.ui.areaBanner(this.areaName(this.playerArea()));
     } else if (portal.kind === 'exit' && p.dir === 'down') {
       p.placeAt(portal.to.x, portal.to.y, 'down');
       this.tut('exit');
@@ -428,6 +411,26 @@ export class Game {
       if (d < bestD) { best = n; bestD = d; }
     }
     return best;
+  }
+
+  benchAt(x, y) {
+    return this.world.objects.find((o) => o.kind === 'bench' && !o.removed && x >= o.x && x < o.x + o.w && y >= o.y && y < o.y + o.h) || null;
+  }
+
+  // Sit on a bench: five hours pass and energy comes back in full.
+  rest() {
+    const H = 5 * 60;
+    if (this.minutes + H > DAY_END - 30) { this.ui.toast(t('msg.restTooLate'), 'warn'); return; }
+    this.ui.eyes(t('cinematic.rest'), () => {
+      const before = this.minutes;
+      this.minutes += H;
+      this.energy = this.maxEnergy;
+      for (const n of this.npcs.values()) n.snapToSchedule(this.world, this.minutes, this.weather);
+      this._prowl(before);
+      if (before < 18 * 60 && this.minutes >= 18 * 60 && this.omenTonight) this.ui.toast(t('msg.omen'), 'warn');
+      this.tut('rest');
+      this.ui.toast(t('msg.rested'));
+    });
   }
 
   catInFront() {
@@ -453,8 +456,7 @@ export class Game {
   // A fish turns a village cat into your companion for a couple of days.
   feedCat(cat, fishId) {
     if (!this.inv.remove(fishId, 1)) return;
-    cat.friendUntil = this.day + FISHING.catDays;
-    this.flags.catUntil = this.cats.map((c) => c.friendUntil);
+    cat.friendUntil = this.day + 1; // follows you until you go to bed
     this.emote(cat, 'heart');
     Audio.play('charm');
     this.ui.toast(t('msg.catFriend'), 'clue');
@@ -463,7 +465,9 @@ export class Game {
   // ------------------------------------------------------------ fishing
   // wait for a bite -> react to "!" -> stop the marker inside the green zone.
   startFishing(tile) {
+    if (!this.inv.count('bait')) { this.ui.toast(t('msg.needBait'), 'warn'); Audio.play('error'); return; }
     if (!this._spend(FISHING.energy)) return;
+    this.inv.remove('bait', 1);
     const [a, b] = FISHING.wait;
     this.fishing = { phase: 'wait', t: a + Math.random() * (b - a), tile };
     Audio.play('swish');
@@ -515,10 +519,15 @@ export class Game {
     if (Math.abs(F.pos - F.center) <= F.zone / 2) {
       if (!this.inv.canFit(F.fish.id)) { this.ui.toast(t('msg.invFull'), 'warn'); this.stopFishing(false); return; }
       this.inv.add(F.fish.id, 1);
-      this.stats.fish = (this.stats.fish || 0) + 1;
-      Progress.add('fish');
-      Audio.play('coin');
-      this.ui.toast(t('msg.fishCaught', { item: t(`item.${F.fish.id}.name`) }), 'clue');
+      if (F.fish.junk) {
+        Audio.play('error');
+        this.ui.toast(t('msg.junkCaught', { item: t(`item.${F.fish.id}.name`) }));
+      } else {
+        this.stats.fish = (this.stats.fish || 0) + 1;
+        Progress.add('fish');
+        Audio.play('coin');
+        this.ui.toast(t('msg.fishCaught', { item: t(`item.${F.fish.id}.name`) }), 'clue');
+      }
     } else { this.ui.toast(t('msg.fishEscaped')); Audio.play('error'); }
     this.stopFishing(false);
   }
@@ -567,6 +576,7 @@ export class Game {
         return { label, run: () => this.useObject(obj) };
       }
     }
+    if (this.benchAt(f.x, f.y) || this.benchAt(p.tx, p.ty)) return { label: t('prompt.rest'), run: () => this.rest() };
     const sp = this.mystery.sparkleAt(f.x, f.y) || this.mystery.sparkleAt(p.tx, p.ty);
     if (sp && this.playerArea().outdoor) return { label: t('prompt.inspect'), run: () => this.inspect(sp) };
     const plot = this.farm.plot(f.x, f.y);
@@ -660,7 +670,7 @@ export class Game {
   useObject(obj) {
     switch (obj.interact) {
       case 'bed':
-        this.ui.confirm(t('sleep.question'), t('sleep.yes'), t('sleep.no'), () => this.sleep(false));
+        this.ui.confirm(t('sleep.question'), t('sleep.yes'), t('sleep.no'), () => this.ui.eyes(t('cinematic.sleep'), () => this.sleep(false)));
         break;
       case 'bin': this.ui.openBin(this); break;
       case 'craft': this.ui.openCraft(this); break;
@@ -865,18 +875,29 @@ export class Game {
       if (this.flags.backpack) return false;
       this.flags.backpack = true;
       this.inv.resize(BACKPACK.size);
-    } else if (!this.inv.canFit(id)) { this.ui.toast(t('msg.invFull'), 'warn'); return false; }
-    else this.inv.add(id, 1);
+    } else if (!this.inv.canFit(id, ITEMS[id].pack || 1)) { this.ui.toast(t('msg.invFull'), 'warn'); return false; }
+    else this.inv.add(id, ITEMS[id].pack || 1);
     this.money -= price;
     Audio.play('coin');
     return true;
   }
 
   sellValue(id) { return ITEMS[id].sell || 0; }
+  // Anything with a price (even 0, like junk) can be sold or shipped; tools can't.
+  sellable(id) { return ITEMS[id].sell !== undefined && ITEMS[id].type !== 'tool'; }
+
+  // Marigold's free welcome seeds: only as part of the tutorial (its "visit the store" step).
+  claimStarter() {
+    if (this.flags.starterGiven || this.tutPhase() !== 'farm' || this.flags.tutDone.includes('shop')) return false;
+    this.flags.starterGiven = true;
+    for (const [id, n] of STARTER_SEEDS) this.inv.add(id, n);
+    Audio.play('pickup');
+    return true;
+  }
 
   sellSlot(i, all) {
     const s = this.inv.slots[i];
-    if (!s || !this.sellValue(s.id)) return;
+    if (!s || !this.sellable(s.id)) return;
     const taken = this.inv.removeAt(i, all ? s.qty : 1);
     const gold = this.sellValue(taken.id) * taken.qty;
     this.money += gold; this.stats.earned += gold;
@@ -886,7 +907,7 @@ export class Game {
 
   shipSlot(i) {
     const s = this.inv.slots[i];
-    if (!s || !this.sellValue(s.id)) return;
+    if (!s || !this.sellable(s.id)) return;
     this.tut('ship');
     const taken = this.inv.removeAt(i, s.qty);
     const existing = this.bin.find((b) => b.id === taken.id);

@@ -44,6 +44,8 @@ export default {
 
   fishing: { wait: "Esperando a que piquen… (E para recoger)", bite: "¡Pican! ¡Pulsa E!", reel: "¡Pulsa E cuando el marcador esté en el verde!" },
 
+  cinematic: { sleep: "Zzz…", rest: "Cinco horas después…", passOut: "No puedes mantener los ojos abiertos…" },
+
   lang: { en: "English", it: "Italiano", es: "Español", pt: "Português", fr: "Français", de: "Deutsch" },
 
   achievement: {
@@ -105,7 +107,7 @@ export default {
 
   tutorial: {
     follow: "➜ Sigue la flecha amarilla de la pantalla.",
-    short: { exit: "Sal de casa", clear: "Quita los hierbajos", till: "Ara la tierra", plant: "Planta semillas", water: "Riega las semillas", ship: "Cajón de envíos", talk: "Habla con un vecino", shop: "Almacén", notebook: "Abre el Cuaderno (Tab)", sleep: "Vete a dormir", inspect: "Inspecciona los destellos", ask: "Pregunta por las gnomizaciones", lectern: "Atril de acusaciones", craft: "Banco: crea un amuleto", charm: "Regala un amuleto" },
+    short: { exit: "Sal de casa", clear: "Quita los hierbajos", till: "Ara la tierra", plant: "Planta semillas", water: "Riega las semillas", ship: "Cajón de envíos", talk: "Habla con un vecino", shop: "Almacén: semillas gratis", notebook: "Abre el Cuaderno (Tab)", sleep: "Vete a dormir", inspect: "Inspecciona los destellos", ask: "Pregunta por las gnomizaciones", lectern: "Atril de acusaciones", craft: "Banco: crea un amuleto", charm: "Regala un amuleto", workbench: "Mira el banco de trabajo", rest: "Descansa en el banco" },
     title_farm: "Lo básico de la granja {n}/{total}",
     title_detective: "Detective {n}/{total}",
     skip: "Saltar estos objetivos",
@@ -118,7 +120,7 @@ export default {
     water: "Elige la regadera (casilla 2) y riega tus semillas. Se rellena en el río, el pozo o la fuente.",
     ship: "Abre el cajón de envíos junto a tu casa y mete algo: se vende durante la noche.",
     talk: "Cruza el puente hasta la plaza y habla con un vecino (ponte delante y pulsa E).",
-    shop: "Visita el Almacén Pepperpot (9:00-17:00) y usa el mostrador: compra semillas, vende cosechas.",
+    shop: "Ve al Almacén Pepperpot del pueblo (abre a las 8:00) y usa el mostrador: Marigold te regala tus primeras semillas.",
     notebook: "Abre tu Cuaderno (Tab o N, o el botón del libro) para ver sospechosos y pistas.",
     sleep: "Vuelve a casa y duerme en tu cama para guardar y empezar un nuevo día.",
     inspect: "¡Alguien ha sido gnomizado! Ve a la estatua del gnomo e inspecciona los destellos cercanos (E): son pistas.",
@@ -126,12 +128,15 @@ export default {
     lectern: "Así se gana: cuando sepas quién es el Gnomador, ve al Ayuntamiento (al norte de la plaza, 8:00-20:00) y usa el Atril de acusaciones. Visítalo ahora para verlo (puedes cancelar).",
     craft: "Protege a la próxima víctima: en el banco de trabajo junto a tu casa, crea una Guirnalda de ajo (2 ajos + 1 nabo).",
     charm: "Dale el amuleto a quien creas que el Gnomador elegirá después (habla con él, «Hacer un regalo…»).",
+    workbench: "Echa un vistazo al banco de trabajo junto a tu casa: aquí conviertes cosechas en amuletos que protegen a los vecinos del Gnomador.",
+    rest: "¿Cansado? Siéntate en el banco frente a tu casa (E): pasan cinco horas y recuperas toda la energía.",
   },
 
   days: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
   weather: { sunny: "Soleado", cloudy: "Nublado", rain: "Lluvia" },
 
   prompt: {
+    rest: "Descansar en el banco",
     fish: "Pescar",
     feedCat: "Darle el pez al gato",
     talk: "Hablar con {name}",
@@ -173,11 +178,15 @@ export default {
     garlic: { name: "Ajo", desc: "Huele a protección. Y a ajo." },
     pumpkin: { name: "Calabaza", desc: "Grande, naranja y extremadamente otoñal." },
     cranberry: { name: "Arándanos", desc: "Ácidos, rojos y muy buenos rebotando." },
-    fishing_rod: { name: "Caña de pescar", desc: "Ponte frente al río y pulsa E para lanzar. Espera a que piquen y detén el marcador en el verde." },
+    fishing_rod: { name: "Caña de pescar", desc: "Ponte frente al río y pulsa E para lanzar (gasta un cebo). Espera a que piquen y detén el marcador en el verde." },
     mudminnow: { name: "Pececillo de barro", desc: "Un pez pequeño y alegre. Huele a fondo de río." },
     river_perch: { name: "Perca de río", desc: "Rayada y orgullosa. La favorita del Capitán." },
     silver_eel: { name: "Anguila plateada", desc: "Solo pica de noche. Escurridiza." },
     golden_carp: { name: "Carpa dorada", desc: "Rara y reluciente. Pica más cuando llueve." },
+    bait: { name: "Cebo", desc: "Gusanos jugosos para pescar. Cada lanzamiento gasta uno. Se vende en paquetes de 5." },
+    tin_can: { name: "Lata vacía", desc: "Oxidada y abollada. No vale nada." },
+    old_boot: { name: "Bota vieja", desc: "La bota perdida de alguien. Huele a río." },
+    soggy_paper: { name: "Periódico empapado", desc: "Las noticias de ayer, muy mojadas." },
     tea_tin: { name: "Lata de té", desc: "Té negro ahumado. Un regalo clásico." },
     aster_bouquet: { name: "Ramo de ásteres", desc: "Flores otoñales moradas, atadas con cordel." },
     hard_cheese: { name: "Queso curado", desc: "Curado un año en una cueva. Supuestamente." },
@@ -187,12 +196,16 @@ export default {
   },
 
   msg: {
+    junkCaught: "Has pescado… {item}. Precioso.",
+    needBait: "Necesitas cebo para pescar. Cómpralo en la tienda.",
+    rested: "¡Te sientes como nuevo!",
+    restTooLate: "Es demasiado tarde para descansar aquí fuera. ¡A la cama!",
     fishWhere: "Ponte frente al río para lanzar el sedal.",
     fishCancel: "Recoges el sedal.",
     fishEscaped: "¡Se escapó!",
     fishTooSoon: "¡Demasiado pronto! Espera a que piquen.",
     fishCaught: "¡Has pescado: {item}!",
-    catFriend: "¡El gato te adora! Te seguirá durante dos días y podrás acariciarlo más a menudo.",
+    catFriend: "¡El gato te adora! Te seguirá hasta que te vayas a dormir y podrás acariciarlo más a menudo.",
     prowlTime: "22:30 – en algún lugar, el Gnomador acecha en la oscuridad…",
     tooTired: "Estás demasiado cansado. Hora de dormir.",
     canEmpty: "La regadera está vacía. Llénala en el río, el pozo o la fuente.",
@@ -206,10 +219,10 @@ export default {
     needTilled: "Las semillas necesitan tierra arada.",
     harvested: "+1 {item}",
     cleared: "¡Limpio!",
-    locked_store: "La tienda está cerrada. Abre de 9:00 a 17:00, cerrada los domingos.",
+    locked_store: "La tienda está cerrada. Abre de 8:00 a 17:00, cerrada los domingos.",
     locked_hall: "El ayuntamiento está cerrado. Horario: 8:00-20:00.",
     locked_house: "Cerrado con llave. Es demasiado tarde (o temprano) para visitas.",
-    shopClosed: "La caja está cerrada. Vuelve entre las 9:00 y las 17:00 (no los domingos).",
+    shopClosed: "La caja está cerrada. Vuelve entre las 8:00 y las 17:00 (no los domingos).",
     lateWarning: "Se ha hecho muy tarde. ¡Vete a la cama antes de las 2:00!",
     midnight: "Medianoche. Tu cama te llama.",
     crafted: "Creado: {item}",
@@ -243,14 +256,14 @@ export default {
     title: "Cómo jugar",
     lines: [
       "Muévete con WASD o las flechas (táctil: arrastra el dedo en la mitad izquierda de la pantalla).",
-      "Pesca: compra una caña en la tienda, ponte frente al río y pulsa E. Cuando veas «!» pulsa E y luego otra vez E con el marcador en el verde. Dale un pez a un gato y te seguirá dos días.",
+      "Pesca: compra caña y cebo en la tienda, ponte frente al río y pulsa E. Cuando veas «!» pulsa E y luego otra vez E con el marcador en el verde. A veces sacas basura: véndela o envíala por 0 para deshacerte de ella. Dale un pez a un gato y te seguirá hasta que te vayas a dormir.",
       "E o Espacio usan la herramienta elegida, o hablan/interactúan con lo que tienes delante. También puedes hacer clic en el mundo.",
       "Habla con los vecinos una vez al día para hacer amigos. Elige «Hacer un regalo…» al hablar para dar regalos o amuletos (un regalo al día por vecino).",
       "Elige casillas de la barra con 1-5, la rueda del ratón o tocándolas. Abre la Mochila (I) para reordenar objetos.",
       "Los menús también funcionan con teclado: flechas/WASD para moverte, E o Espacio para elegir, Esc para cerrar.",
       "Mando: stick izquierdo o cruceta para moverte, A usar, B atrás/pausa, X mochila, Y cuaderno, LB/RB barra.",
       "Granja: quita restos con la hoz, ara con la azada, siembra y riega cada día. La lluvia riega por ti.",
-      "Pon la cosecha en el cajón de envíos para venderla de noche, o véndela en la tienda (9:00-17:00, cerrada los domingos).",
+      "Pon la cosecha en el cajón de envíos para venderla de noche, o véndela en la tienda (8:00-17:00, cerrada los domingos).",
       "Duerme en tu cama para guardar y empezar un nuevo día. Si sigues despierto pasadas las 2:00 te desmayas (y pierdes algo de oro).",
       "CÓMO GANAR: descubre quién es el Gnomador y ve al Ayuntamiento (al norte de la plaza, abierto 8:00-20:00) a usar el Atril de acusaciones. Elige al vecino correcto y caso cerrado.",
       "Alguien gnomiza a un vecino cada pocas noches. Inspecciona los destellos junto a los gnomos, pregunta a los vecinos («Preguntar por las gnomizaciones») y registra casas cuando sus dueños no están.",
@@ -324,7 +337,7 @@ export default {
   board: {
     title: "Tablón de Mildew Hollow",
     empty: "PERDIDO: un gato. ENCONTRADO: un gato (otro). Por lo demás, nada que contar.",
-    store: "ALMACÉN: abierto 9:00-17:00. Cerrado los domingos. — M. Pepperpot",
+    store: "ALMACÉN: abierto 8:00-17:00. Cerrado los domingos. — M. Pepperpot",
     hall: "AYUNTAMIENTO: si sabes quién es el Gnomador, usa el Atril de acusaciones. Asegúrate, por favor. — Alcalde Quill",
   },
 
@@ -351,6 +364,8 @@ export default {
   },
 
   shop: {
+    gift: "¡Bienvenido a Mildew Hollow! Aquí tienes semillas de nabo y de ajo, invita la casa. ¡Solo esta vez!",
+    giftToast: "¡Marigold te ha regalado semillas!",
     title: "Almacén Pepperpot",
     buyTab: "Comprar",
     sellTab: "Vender",
@@ -709,7 +724,7 @@ export default {
       name: "Marigold Pepperpot", short: "Marigold", title: "Tendera",
       bio: "Lleva el almacén. Lo cuenta todo dos veces. Ansiosa, honrada y nada gnomesca.",
       lines: {
-        hi1: "¡Bienvenido! La tienda abre de nueve a cinco, cerrada los domingos. Conté las horas. Dos veces.",
+        hi1: "¡Bienvenido! La tienda abre de ocho a cinco, cerrada los domingos. Conté las horas. Dos veces.",
         hi2: "Si me vendes nabos, los contaré. Dos veces. No es nada personal.",
         hi3: "Hoy cuadré las cuentas. Cuadraban. Lloré un poquito.",
         rain: "Con la lluvia el suelo cruje. Cuento los crujidos.",

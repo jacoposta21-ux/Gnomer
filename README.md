@@ -63,7 +63,6 @@ console.
 | Bag / rearrange items | I or B | Bag button |
 | Pause | Esc or P | Pause button |
 | Mute | M | Speaker button |
-| Wait (fast-forward ×6) | F | ⏩ button |
 
 In dialogue, E/Space/click advances. Pick answers with the arrow keys + E, the number keys or a click.
 Every menu also works from the keyboard: arrows/WASD move the highlight, E/Space choose, Esc closes.
@@ -73,11 +72,13 @@ B back/pause, X bag, Y notebook, LB/RB hotbar, Start pause.
 
 ## How to play (short)
 
+- **Start:** you begin with the hoe, the watering can and the scythe. During the tutorial Marigold
+  gives you your first turnip and garlic seeds for free at the store (only then).
 - **Farm:** use the scythe to clear debris, the hoe to till, then plant seeds and water every day.
   Refill the can at the river, the well or the fountain. Turnips take 3 days, garlic 4, pumpkins 7.
   Rain waters for you.
 - **Earn:** put produce in the shipping bin (sold overnight) or sell it at Pepperpot's General Store
-  (9:00-17:00, closed Sundays). Buy seeds, gifts and a bigger backpack there.
+  (8:00-17:00, closed Sundays). Buy seeds, gifts and a bigger backpack there.
 - **Days:** a day runs from 6:00 to 2:00 (about 9 real minutes). Sleeping saves the game. If you're
   still up at 2:00 you pass out and lose some gold.
 - **Friends:** chat with each villager once a day and give gifts ("Give a gift…" in the chat menu)
@@ -94,12 +95,15 @@ B back/pause, X bag, Y notebook, LB/RB hotbar, Start pause.
 - **Requests:** villagers post requests (notice board / Notebook). Deliver in time for gold, hearts
   and sometimes a secret clue.
 - **Cranberries** keep fruiting every 2 days after the first harvest.
-- **Fishing:** buy a rod at the store, face the river and press E; react to the bite, then stop the
-  marker in the green. Four fish (one only at night, one rare and likelier in rain). Give a fish to a
-  village cat and it follows you everywhere for two days, and can be petted three times a day.
-- **Waiting:** press F (or ⏩) to fast-forward; it stops when you move, and at 22:30 on nights the
-  Gnomer is out. On quiet nights the clock runs twice as fast after 20:00.
-- Entering a building shows its name ("Odessa's house"); a nameplate appears above nearby doors.
+- **Fishing:** buy a rod and bait (packs of 5, one per cast) at the store, face the river and press
+  E; react to the bite, then stop the marker in the green. Roughly half the catches are mudminnows,
+  a third perch, and some are junk (cans, boots, soggy newspapers) worth 0 that you can sell or ship
+  to get rid of. Rarer: silver eel (night only) and golden carp (likelier in rain). Give a fish to a
+  village cat and it follows you until you go to bed, and can be petted three times a day.
+- **Resting:** sit on a bench (there's one in front of the farmhouse) to let five hours pass and
+  restore all your energy. Sleeping and resting close your eyes with a short fade. On quiet nights
+  the clock runs twice as fast after 20:00.
+- A nameplate appears above doors as you approach them.
 - **Difficulty** (title screen): Easy, Normal or Hard, chosen per new game.
 - **Achievements & statistics** carry over between games (title screen or pause menu).
 - **Accuse** the Gnomer at the lectern in the town hall (8:00-20:00). Get it right and everyone is
