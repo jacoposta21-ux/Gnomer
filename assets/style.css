@@ -261,3 +261,5 @@ body.touch #prompt { bottom: 4.4rem; left: auto; right: 6.2rem; transform: none;
 .ach-icon { font-size: 1.3rem; width: 1.6rem; text-align: center; color: var(--accent2); }
 .tutorial.detective { border-color: #c2563f; }
 .tutorial.detective .tut-head { color: #e88a7a; }
+.lang-select { appearance: auto; background: var(--panel2); color: var(--cream); }
+.lang-select option { background: var(--panel); color: var(--cream); }

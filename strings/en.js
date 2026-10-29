@@ -39,7 +39,7 @@ export default {
     omen: 'The Gnomer is restless tonight…',
   },
 
-  lang: { en: 'English', it: 'Italiano' },
+  lang: { en: "English", it: "Italiano", es: "Español", pt: "Português", fr: "Français", de: "Deutsch" },
 
   achievement: {
     title: 'Achievements',

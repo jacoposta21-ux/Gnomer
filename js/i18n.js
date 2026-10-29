@@ -1,7 +1,7 @@
 // Tiny i18n layer. All player-facing text is looked up here by dotted key.
 import en from '../strings/en.js';
 
-export const SUPPORTED = ['en', 'it']; // add a language here when strings/<lang>.js exists
+export const SUPPORTED = ['en', 'it', 'es', 'pt', 'fr', 'de']; // add a language here when strings/<lang>.js exists
 let current = 'en';
 let dict = en;
 

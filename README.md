@@ -150,7 +150,7 @@ There are no ads, external links, logins or custom fullscreen button.
 index.html            entry point (loads the CrazyGames SDK + js/main.js)
 assets/style.css      all HTML/CSS overlay styling
 strings/en.js         EVERY player-facing string (dialogue, clues, UI, items...)
-strings/it.js         Italian translation
+strings/it|es|pt|fr|de.js  translations
 js/main.js            boot sequence + game loop
 js/game.js            game state & rules glue: time, interactions, night cycle, endings
 js/platform.js        CrazyGames SDK v3 adapter with graceful fallbacks
@@ -186,8 +186,8 @@ tools/sim-test.js     headless season simulation tests
 - **Gnomer profiles and clues:** add to `js/data/killers.js` (victim rule, interval, clues, red
   herrings, alibi) with texts under `killer.<id>` and `clue.<clueId>`. New victim rules go in
   `Mystery.pickVictim`.
-- **Localization:** English (`strings/en.js`) and Italian (`strings/it.js`) are included; players
-  switch language on the title screen. To add another language, copy `strings/en.js` to
+- **Localization:** English, Italian, Spanish, Portuguese (Brazil), French and German are included
+  (`strings/<lang>.js`); players switch language from the title-screen dropdown. To add another language, copy `strings/en.js` to
   `strings/<lang>.js`, translate the values (keep the keys and `{placeholders}`), and add the code to
   `SUPPORTED` in `js/i18n.js`. The default comes from the SDK locale, then the browser language.
   `node tools/sim-test.js` fails if a translation is missing a key or a placeholder.

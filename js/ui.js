@@ -747,9 +747,9 @@ export class UI {
     const extra = $('#title-extra');
     extra.innerHTML = '';
     extra.append(h('button', { class: 'btn small', onclick: () => this.openAchievements() }, `★ ${t('achievement.title')}`));
-    for (const lang of SUPPORTED) {
-      extra.append(h('button', { class: `btn small${lang === currentLang() ? ' sel' : ''}`, onclick: () => onLanguage(lang) }, t(`lang.${lang}`)));
-    }
+    const sel = h('select', { class: 'btn small lang-select', 'aria-label': 'Language', onchange: (e) => onLanguage(e.target.value) },
+      SUPPORTED.map((lang) => h('option', { value: lang, ...(lang === currentLang() ? { selected: true } : {}) }, `🌐 ${t(`lang.${lang}`)}`)));
+    extra.append(sel);
     const row = $('#title-diff');
     row.innerHTML = '';
     row.append(h('span', { text: t('difficulty.label') }));
