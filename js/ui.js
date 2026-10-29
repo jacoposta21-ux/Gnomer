@@ -4,7 +4,6 @@ import { Art } from './art.js';
 import { ITEMS, SHOP_STOCK, BACKPACK } from './data/items.js';
 import { RECIPES } from './data/recipes.js';
 import { VILLAGERS } from './data/villagers.js';
-import { MYSTERY } from './data/killers.js';
 import { CLUES } from './mystery.js';
 import { HOTBAR } from './inventory.js';
 import { formatClock, dayOfWeek, SEASON_DAYS } from './time.js';
@@ -474,8 +473,18 @@ export class UI {
       const line = fmt(pool[n.n % pool.length], { victim: t(`npc.${n.victim}.name`).toUpperCase(), place: t(`place.${n.place}`).toUpperCase() });
       body.append(h('div', { class: 'paper' }, h('div', { class: 'day', text: t('notebook.foundDay', { day: n.day }) }), h('div', { class: 'headline', text: line })));
     }
+    if (game.quests.length) body.append(h('div', { class: 'paper' }, h('div', { class: 'headline', text: t('quest.boardTitle') }), ...game.quests.map((q) => this._questRow(game, q))));
     body.append(h('div', { class: 'paper' }, t('board.store')), h('div', { class: 'paper' }, t('board.hall')));
     this.open('board', this.panel(t('board.title'), body));
+  }
+
+  _questRow(game, q) {
+    const have = game.inv.count(q.item);
+    return h('div', { class: 'item-row' }, h('img', { src: Art.portraits[q.npc], alt: '' }),
+      h('div', { class: 'grow' },
+        h('div', { class: 'name', text: t('quest.line', { name: t(`npc.${q.npc}.short`), qty: q.qty, item: itemName(q.item) }) }),
+        h('div', { class: 'desc', text: `${t('quest.due', { dow: tList('days')[dayOfWeek(q.due)], day: q.due })} · ${t('quest.rewardLine', { n: game.questReward(q) })}` })),
+      icon(q.item), h('span', { class: `tag ${have >= q.qty ? 'green' : 'red'}`, text: `${have}/${q.qty}` }));
   }
 
   // ------------------------------------------------------------ accusation
@@ -514,7 +523,7 @@ export class UI {
       body.innerHTML = '';
       tabs.querySelectorAll('.tab').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
       if (tab === 'suspects') {
-        body.append(h('p', { class: 'help', text: `${t('notebook.nextHint', { n: game.victimCount, max: MYSTERY.maxVictims })} ${t('notebook.seasonLeft', { day: Math.min(game.day, SEASON_DAYS), total: SEASON_DAYS })}` }));
+        body.append(h('p', { class: 'help', text: `${t('notebook.nextHint', { n: game.victimCount, max: game.mystery.maxVictims })} ${t('notebook.seasonLeft', { day: Math.min(game.day, SEASON_DAYS), total: SEASON_DAYS })}` }));
         const grid = h('div', { class: 'suspects' });
         const tally = this._caseTally(game);
         for (const v of VILLAGERS) {
@@ -574,7 +583,7 @@ export class UI {
             h('div', { class: 'cm' }, tag, ' ', explained ? h('span', { class: 'tag', text: t('notebook.explained') }) : null, ' ', t('notebook.foundDay', { day: f.day }))));
         }
       } else if (tab === 'victims') {
-        body.append(h('p', { class: 'help', text: t('notebook.nextHint', { n: game.victimCount, max: MYSTERY.maxVictims }) }));
+        body.append(h('p', { class: 'help', text: t('notebook.nextHint', { n: game.victimCount, max: game.mystery.maxVictims }) }));
         if (!m.attacks.length) body.append(h('p', { text: t('notebook.noVictims') }));
         for (const a of m.attacks) {
           const v = byId[a.victim];
@@ -584,11 +593,15 @@ export class UI {
             h('div', { class: 'grow' }, h('div', { class: 'name', text: line }),
               h('div', { class: 'desc', text: `${t('notebook.heightLabel', { n: v.stats.height })} · ${t('notebook.wealthLabel', { w: wealthWords[v.stats.wealth] })} · ♥${game.npcs.get(a.victim).hearts}` }))));
         }
+      } else if (tab === 'requests') {
+        body.append(h('p', { class: 'help', text: t('quest.help') }));
+        if (!game.quests.length) body.append(h('p', { text: t('quest.none') }));
+        for (const q of game.quests) body.append(this._questRow(game, q));
       } else {
         body.append(h('ul', {}, tList('help.lines').map((l) => h('li', { text: l, style: 'margin-bottom:0.35rem' }))));
       }
     };
-    const tabs = h('div', { class: 'tabs' }, ['suspects', 'clues', 'victims', 'help'].map((id) =>
+    const tabs = h('div', { class: 'tabs' }, ['suspects', 'clues', 'victims', 'requests', 'help'].map((id) =>
       h('button', { class: 'tab', 'data-tab': id, onclick: () => { tab = id; render(); } }, t(`notebook.${id}`))));
     render();
     this.open('notebook', this.panel(t('notebook.title'), body, null, { tabs }));
@@ -628,8 +641,11 @@ export class UI {
         h('div', { class: 'headline', text: headline }),
         h('div', { text: a.blocked ? t('morning.newsFoiled', { victim, place: t(`place.${a.place}`) }) : t('morning.newsGnomed', { victim }) })));
     }
+    if (r.scared) body.append(h('p', { class: 'news good', text: t('morning.scared') }));
+    if (r.quest) body.append(h('div', { class: 'news good' }, t('quest.new', { name: t(`npc.${r.quest.npc}.name`), qty: r.quest.qty, item: itemName(r.quest.item) })));
+    for (const q of r.expired || []) body.append(h('p', { class: 'help', text: t('quest.expired', { name: t(`npc.${q.npc}.short`) }) }));
     if (game.omenTonight) body.append(h('p', { class: 'news', text: t('morning.omen') }));
-    if (game.mystery.attacks.length && !game.mystery.solved) body.append(h('p', { class: 'help', text: t('morning.victimsLeft', { n: game.victimCount, max: MYSTERY.maxVictims }) }));
+    if (game.mystery.attacks.length && !game.mystery.solved) body.append(h('p', { class: 'help', text: t('morning.victimsLeft', { n: game.victimCount, max: game.mystery.maxVictims }) }));
     body.append(h('h3', { text: t('morning.shipped') }));
     if (!r.shipped.length) body.append(h('p', { class: 'help', text: t('morning.nothingShipped') }));
     for (const s of r.shipped) body.append(h('div', { class: 'item-row' }, icon(s.id), h('div', { class: 'grow' }, `${itemName(s.id)} ×${s.qty}`), h('span', { class: 'price', text: t('shop.price', { n: s.value }) })));
@@ -692,7 +708,14 @@ export class UI {
   }
 
   // ------------------------------------------------------------ title
-  showTitle(saveInfo, { onPlay, onNew }) {
+  showTitle(saveInfo, { onPlay, onNew, difficulty, onDifficulty }) {
+    const row = $('#title-diff');
+    row.innerHTML = '';
+    row.append(h('span', { text: t('difficulty.label') }));
+    for (const d of ['easy', 'normal', 'hard']) {
+      row.append(h('button', { class: `btn small${d === difficulty ? ' sel' : ''}`, title: t(`difficulty.${d}Help`), onclick: () => { onDifficulty(d); this.showTitle(saveInfo, { onPlay, onNew, difficulty: d, onDifficulty }); } }, t(`difficulty.${d}`)));
+    }
+    row.append(h('div', { class: 'diff-help', text: t(`difficulty.${difficulty}Help`) + (saveInfo ? ` ${t('difficulty.newOnly')}` : '') }));
     this.closeModalSilently();
     this.hideIntro();
     $('#title').classList.remove('hidden');
@@ -701,7 +724,7 @@ export class UI {
     $('#btn-play').textContent = t('ui.play');
     $('#btn-new').textContent = t('ui.newGame');
     $('#btn-new').classList.toggle('hidden', !saveInfo);
-    $('#title-info').textContent = saveInfo ? t('ui.continueInfo', { day: saveInfo.day }) : '';
+    $('#title-info').textContent = saveInfo ? t('ui.continueInfo', { day: saveInfo.day, diff: t(`difficulty.${saveInfo.diff || 'normal'}`) }) : '';
     $('#btn-play').onclick = () => { Audio.play('click'); onPlay(); };
     $('#btn-new').onclick = () => {
       this.confirm(t('ui.newGameConfirm'), t('ui.newGame'), t('ui.cancel'), () => onNew(), { danger: true });

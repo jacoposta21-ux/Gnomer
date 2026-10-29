@@ -249,3 +249,7 @@ body.touch #prompt { bottom: 4.4rem; left: auto; right: 6.2rem; transform: none;
   font-size: 0.75rem; line-height: 1.25; text-align: center; animation: pop 0.15s ease-out;
 }
 .bubble::after { content: ''; position: absolute; left: 50%; bottom: -7px; margin-left: -5px; border: 5px solid transparent; border-top-color: #2b2125; border-bottom: none; }
+
+/* ---------- step 3 ---------- */
+#title-diff { display: flex; gap: 0.35rem; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 0.4rem; color: var(--muted); font-size: 0.85rem; }
+#title-diff .diff-help { flex-basis: 100%; font-size: 0.75rem; margin-top: 0.2rem; }

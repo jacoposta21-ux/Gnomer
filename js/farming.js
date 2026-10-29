@@ -41,9 +41,10 @@ export class Farm {
   harvest(x, y) {
     const p = this.plot(x, y);
     if (!this.isMature(p)) return null;
-    const produce = CROPS[p.c].produce;
-    p.c = null; p.g = 0;
-    return produce;
+    const crop = CROPS[p.c];
+    if (crop.regrow) p.g = crop.days - crop.regrow; // stays planted and fruits again
+    else { p.c = null; p.g = 0; }
+    return crop.produce;
   }
 
   clearDebris(x, y) { const k = this.key(x, y); const d = this.debris.get(k); if (!d) return null; this.debris.delete(k); return d; }

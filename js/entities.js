@@ -106,6 +106,7 @@ export class NPC extends Actor {
 
   // Location id the schedule wants right now.
   slot(minutes, weather) {
+    if (this.override) return this.override; // e.g. the Gnomer's night prowl
     const sched = this.schedule(weather);
     let cur = sched[0][1];
     for (const [t, loc] of sched) if (minutes >= parseTime(t)) cur = loc;
@@ -123,6 +124,7 @@ export class NPC extends Actor {
   }
 
   snapToSchedule(world, minutes, weather) {
+    this.override = null; this.prowling = false; this.hooded = false; this.speed = 44;
     const locId = this.slot(minutes, weather);
     const loc = world.resolveLocation(locId, this.def.home);
     if (loc) this.placeAt(loc.x, loc.y, loc.face);
@@ -133,6 +135,8 @@ export class NPC extends Actor {
 
   update(dt, world, minutes, weather) {
     if (this.gnomed || this.paused) { this.moving = false; return; }
+    // the hood comes off only once safely back indoors (so a fleeing Gnomer stays anonymous)
+    if (this.hooded && !this.prowling && this._area && !this._area.outdoor) { this.hooded = false; this.speed = 44; }
     const want = this.slot(minutes, weather);
     if (want !== this.goal) {
       this.goal = want;

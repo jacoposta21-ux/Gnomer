@@ -48,11 +48,12 @@ export class Game {
     this.emotes = [];
     this.cats = MAP.cats.map(([color, ...rect]) => new Cat(color, rect));
     this.banterT = 6;
+    this.quests = []; // villager requests: { npc, item, qty, due }
     this.flags = { backpack: false, knownLoves: {}, introDone: false, tutDone: [], tutSkip: false };
     this.stats = { earned: 0, harvested: 0 };
   }
 
-  newGame() {
+  newGame(difficulty = 'normal') {
     const seed = (Math.random() * 4294967296) >>> 0;
     this._baseState(seed);
     this.day = 1;
@@ -65,7 +66,7 @@ export class Game {
     this.inv = new Inventory(START_INV_SIZE);
     for (const [id, n] of START_INVENTORY) this.inv.add(id, n);
     this.farm.scatterDebris(this.rng);
-    this.mystery.newGame(this.rng, this.world);
+    this.mystery.newGame(this.rng, this.world, difficulty);
     this._wakeUp();
   }
 
@@ -83,6 +84,7 @@ export class Game {
     this.farm.load(d.farm || {});
     this.bin = (d.bin || []).filter(([id]) => ITEMS[id]).map(([id, qty]) => ({ id, qty }));
     this.flags = { ...this.flags, ...(d.flags || {}) };
+    this.quests = (d.quests || []).filter((q) => ITEMS[q.item] && this.npcs.has(q.npc));
     if (!d.flags || !d.flags.tutDone) this.flags.tutSkip = this.day > 1;
     this.stats = { ...this.stats, ...(d.stats || {}) };
     for (const [id, s] of Object.entries(d.npcs || {})) {
@@ -101,7 +103,7 @@ export class Game {
     return {
       rng: this.rng.s, day: this.day, weather: this.weather, money: this.money, maxEnergy: this.maxEnergy, energy: this.energy,
       water: this.water, inv: this.inv.toJSON(), farm: this.farm.toJSON(), bin: this.bin.map((b) => [b.id, b.qty]),
-      npcs, mystery: this.mystery.toJSON(), flags: this.flags, stats: this.stats,
+      npcs, mystery: this.mystery.toJSON(), flags: this.flags, stats: this.stats, quests: this.quests,
     };
   }
 
@@ -124,6 +126,80 @@ export class Game {
     this.world.recomputeSolid();
   }
 
+  // ------------------------------------------------------------ the Gnomer's night prowl
+  // On attack nights the Gnomer sneaks to tonight's spot (22:30-1:30). Get close and they flee:
+  // no gnoming tonight, and you glimpse a clue.
+  _prowl(before) {
+    const m = this.mystery;
+    if (m.solved || m.outcome) return;
+    const g = this.npcs.get(m.gnomerId);
+    if (before < 22.5 * 60 && this.minutes >= 22.5 * 60 && this.day === m.nextAttack) {
+      const plan = m.planTonight(this);
+      if (plan) {
+        this.world.locations.__prowl = { x: plan.x, y: plan.y, face: 'up', area: 'outdoor' };
+        g.override = '__prowl'; g.prowling = true; g.hooded = true; g.speed = 40;
+      }
+    }
+    if (!g.prowling) return;
+    if (before < 25.5 * 60 && this.minutes >= 25.5 * 60) { g.override = null; g.prowling = false; return; }
+    const p = this.player;
+    if (g.area && g.area.outdoor && g.area === this.playerArea() && Math.hypot(g.x - p.x, g.y - p.y) < 36) {
+      const clue = m.interrupt(this.day);
+      g.override = null; g.prowling = false; g.speed = 90; // bolt home
+      this.emote(g, 'bang');
+      Audio.play('caught');
+      let text = t('night.interrupted');
+      if (clue) { text += `\n\n${t(`clue.${clue.id}.title`)}: ${t(`clue.${clue.id}.text`)}`; this._clueToast(clue.id); }
+      this.stats.scared = (this.stats.scared || 0) + 1;
+      this.ui.say(null, text);
+    }
+  }
+
+  // ------------------------------------------------------------ quests
+  // A villager asks for something they like. Deliver it before the deadline for gold, hearts and gossip.
+  _newQuest() {
+    if (this.quests.length >= 2 || this.day < 2 || this.mystery.outcome) return null;
+    if (!this.rng.chance(0.55)) return null;
+    const free = VILLAGERS.filter((v) => !this.npcs.get(v.id).gnomed && !this.quests.some((q) => q.npc === v.id));
+    if (!free.length) return null;
+    const v = this.rng.pick(free);
+    const wants = [...v.loves, ...v.likes].filter((id) => ITEMS[id] && ITEMS[id].gift);
+    if (!wants.length) return null;
+    const item = this.rng.pick(wants);
+    const qty = ITEMS[item].type === 'crop' && item !== 'pumpkin' ? this.rng.int(2, 4) : 1;
+    const q = { npc: v.id, item, qty, due: this.day + (item === 'pumpkin' || item === 'cranberry' ? 6 : 3) };
+    this.quests.push(q);
+    return q;
+  }
+
+  questFor(npcId) { return this.quests.find((q) => q.npc === npcId) || null; }
+
+  questReward(q) { return Math.round(((ITEMS[q.item].sell || 20) * q.qty) * 1.5) + 40; }
+
+  deliverQuest(npc) {
+    const q = this.questFor(npc.id);
+    if (!q || this.inv.count(q.item) < q.qty) { npc.paused = false; return; }
+    this.inv.remove(q.item, q.qty);
+    this.quests = this.quests.filter((x) => x !== q);
+    const gold = this.questReward(q);
+    this.money += gold; this.stats.earned += gold;
+    this.stats.quests = (this.stats.quests || 0) + 1;
+    this.addFriendship(npc, 60);
+    this.emote(npc, 'heart');
+    Audio.play('coin');
+    this.ui.toast(t('quest.reward', { n: gold }));
+    const pages = [{ who: npc.id, text: t('quest.thanks') }];
+    // grateful villagers share what they know, even before you're close friends
+    const g = this.mystery.attacks.length ? this.mystery.gossipFor(npc.id, this) : null;
+    if (g) {
+      this.mystery.addFound(g.clue.id, this.day);
+      this._clueToast(g.clue.id);
+      this._gossipCache.clear();
+      pages.push({ who: npc.id, text: `${t('quest.secret')} ${t(`clue.${g.clue.id}.text`)}` });
+    }
+    this.ui.dialogue(pages, () => { npc.paused = false; });
+  }
+
   // ------------------------------------------------------------ tutorial
   tut(event) {
     const f = this.flags;
@@ -136,7 +212,7 @@ export class Game {
   get tutTotal() { return TUTORIAL.length; }
 
   // The coming night is an attack night (villagers can feel it).
-  get omenTonight() { return !this.mystery.solved && !this.mystery.outcome && this.day === this.mystery.nextAttack; }
+  get omenTonight() { return this.mystery.diff.omen && !this.mystery.solved && !this.mystery.outcome && this.day === this.mystery.nextAttack; }
 
   playerArea() { return this.world.areaAt(this.player.tx, this.player.ty) || this.world.areaById.outdoor; }
 
@@ -188,6 +264,7 @@ export class Game {
     for (const e of this.emotes) e.t -= dt;
     if (this.emotes.length) this.emotes = this.emotes.filter((e) => e.t > 0);
     this._bumpT -= dt;
+    this._prowl(before);
     if (before < 18 * 60 && this.minutes >= 18 * 60 && this.omenTonight) { this.ui.toast(t('msg.omen'), 'warn'); Audio.play('gnome'); }
     if (before < 24 * 60 && this.minutes >= 24 * 60) this.ui.toast(t('msg.midnight'));
     if (before < 25 * 60 && this.minutes >= 25 * 60) this.ui.toast(t('msg.lateWarning'), 'warn');
@@ -201,7 +278,7 @@ export class Game {
     const area = this.playerArea();
     // idle villagers are solid (Player._move ignores tiles we already overlap, so we can't get trapped)
     for (const n of this.npcs.values()) {
-      if (!n.gnomed && !n.moving && n.area === area && n.tx === x && n.ty === y) return true;
+      if (!n.gnomed && !n.moving && !n.hooded && n.area === area && n.tx === x && n.ty === y) return true;
     }
     return false;
   }
@@ -238,7 +315,7 @@ export class Game {
     const fx = p.x + dx * 12, fy = p.y + dy * 12;
     let best = null, bestD = 13;
     for (const n of this.npcs.values()) {
-      if (n.gnomed || n.area !== area) continue;
+      if (n.gnomed || n.hooded || n.area !== area) continue;
       const d = Math.hypot(n.x - fx, n.y - fy);
       if (d < bestD) { best = n; bestD = d; }
     }
@@ -266,7 +343,7 @@ export class Game {
   // Villagers chatting among themselves: speech bubbles near the player.
   _banter() {
     const area = this.playerArea(), p = this.player;
-    const near = [...this.npcs.values()].filter((n) => !n.gnomed && !n.moving && !n.paused && n.area === area && Math.hypot(n.x - p.x, n.y - p.y) < 150);
+    const near = [...this.npcs.values()].filter((n) => !n.gnomed && !n.moving && !n.paused && !n.hooded && n.area === area && Math.hypot(n.x - p.x, n.y - p.y) < 150);
     if (!near.length) return;
     const a = near[Math.floor(Math.random() * near.length)];
     const partner = near.find((n) => n !== a && Math.hypot(n.x - a.x, n.y - a.y) < 90);
@@ -441,6 +518,8 @@ export class Game {
 
   _chat(npc, text) {
     const choices = [{ label: t('talk.ask'), fn: () => this.askAbout(npc) }];
+    const q = this.questFor(npc.id);
+    if (q && this.inv.count(q.item) >= q.qty) choices.unshift({ label: t('quest.deliver', { qty: q.qty, item: t(`item.${q.item}.name`) }), fn: () => this.deliverQuest(npc) });
     if (this.giftables().length) choices.push({ label: t('talk.giveMenu'), fn: () => this._giftMenu(npc) });
     choices.push({ label: t('talk.bye'), fn: null });
     this.ui.dialogue([{ who: npc.id, text, choices }], () => { npc.paused = false; });
@@ -517,7 +596,7 @@ export class Game {
     const now = performance.now();
     if (now - this._gossipT > 500) { this._gossipCache.clear(); this._gossipT = now; }
     if (!this._gossipCache.has(npc.id)) {
-      const g = this.mystery.attacks.length ? this.mystery.gossipFor(npc.id, this) : null;
+      const g = this.mystery.attacks.length && this.mystery.diff.hints ? this.mystery.gossipFor(npc.id, this) : null;
       this._gossipCache.set(npc.id, !!(g && !g.locked));
     }
     return this._gossipCache.get(npc.id);
@@ -643,6 +722,7 @@ export class Game {
     const attack = this.mystery.night(this);
     if (attack && !attack.blocked) this._gnome(attack);
     report.attack = attack;
+    report.scared = this.mystery.interrupted === this.day;
 
     this.farm.nightly();
     this.day++;
@@ -652,6 +732,10 @@ export class Game {
     if (this.weather === 'rain') this.farm.rain();
     this.energy = passedOut ? Math.round(this.maxEnergy * 0.6) : this.maxEnergy;
     report.weather = this.weather;
+    report.expired = [];
+    for (const q of this.quests) if (q.due < this.day) { report.expired.push(q); this.addFriendship(this.npcs.get(q.npc), -10); }
+    this.quests = this.quests.filter((q) => q.due >= this.day && !this.npcs.get(q.npc).gnomed);
+    report.quest = this._newQuest();
     this._wakeUp();
     this.input.clearHeld();
 

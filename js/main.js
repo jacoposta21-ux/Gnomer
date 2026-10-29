@@ -47,12 +47,15 @@ async function boot() {
     game.player.placeAt(47, 23, 'down');
     renderer.snap(game);
     const s = Save.load();
-    ui.showTitle(s ? { day: s.day } : null, {
+    const diff = () => Save.settings().difficulty || 'normal';
+    ui.showTitle(s ? { day: s.day, diff: s.mystery && s.mystery.diff } : null, {
       onPlay: () => {
         const save = Save.load();
-        if (save) { game.loadSave(save); start(false); } else { game.newGame(); start(true); }
+        if (save) { game.loadSave(save); start(false); } else { game.newGame(diff()); start(true); }
       },
-      onNew: () => { Save.clear(); game.newGame(); start(true); },
+      onNew: () => { Save.clear(); game.newGame(diff()); start(true); },
+      difficulty: diff(),
+      onDifficulty: (d) => { const st = Save.settings(); st.difficulty = d; Save.saveSettings(st); },
     });
   };
   ui.onQuit = goTitle;

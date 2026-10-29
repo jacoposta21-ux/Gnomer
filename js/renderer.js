@@ -226,11 +226,30 @@ export class Renderer {
     const x = Math.round(ch.x), y = Math.round(ch.y);
     g.fillStyle = 'rgba(20,12,16,0.28)';
     g.fillRect(x - 5, y + 1, 10, 2); g.fillRect(x - 4, y, 8, 4);
-    g.drawImage(sheet[ch.dir][ch.frame()], x - 8, y - 29);
+    const spr = sheet[ch.dir][ch.frame()];
+    g.drawImage(ch.hooded ? this._silhouette(spr) : spr, x - 8, y - 29);
+    if (ch.hooded) return;
     if (sheetId !== 'player' && game.gossipHint(ch)) this._emote(g, 'talk', x - 4, y - 38 + Math.round(Math.sin(this.time * 4) * 1));
     if (sheetId !== 'player' && game.mystery.protect[ch.id] > 0) { // charm glint
       if (Math.floor(this.time * 2 + ch.x) % 4 === 0) { g.fillStyle = PAL.litL; g.fillRect(x + 4, y - 14, 1, 1); }
     }
+  }
+
+  // A dark hooded shape: you can't tell who the night prowler is just by looking.
+  _silhouette(spr) {
+    this._sil = this._sil || new Map();
+    let c = this._sil.get(spr);
+    if (!c) {
+      c = document.createElement('canvas'); c.width = spr.width; c.height = spr.height;
+      const g = c.getContext('2d');
+      g.drawImage(spr, 0, 0);
+      g.globalCompositeOperation = 'source-in';
+      g.fillStyle = '#120c18'; g.fillRect(0, 0, c.width, c.height);
+      g.globalCompositeOperation = 'source-over';
+      g.fillStyle = '#e8d070'; g.fillRect(5, 12, 1, 1); g.fillRect(9, 12, 1, 1); // glinting eyes
+      this._sil.set(spr, c);
+    }
+    return c;
   }
 
   _emote(g, kind, x, y) {

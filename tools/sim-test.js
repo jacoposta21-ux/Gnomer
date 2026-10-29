@@ -221,4 +221,57 @@ assert.ok(results.minEvidenceBeforeLoss >= 4, 'a diligent player always has at l
   console.log('furniture reachable + dialogue text: ok');
 }
 
+// 10) Night prowl: catching the Gnomer cancels tonight's attack and reveals the sighting clue
+{
+  const { game, ui } = makeGame(); game.newGame();
+  const m = game.mystery;
+  game.day = m.nextAttack; game.minutes = 22.5 * 60 - 0.01;
+  game._tick(0.01);
+  const g = game.npcs.get(m.gnomerId);
+  assert.ok(g.prowling && m.tonight, 'gnomer goes out on attack night');
+  const plan = m.tonight;
+  for (let i = 0; i < 60 * 300 && !(g.tx === plan.x && g.ty === plan.y); i++) g.update(1 / 60, game.world, game.minutes, game.weather);
+  assert.ok(g.tx === plan.x && g.ty === plan.y, 'gnomer reaches the attack spot');
+  game.player.x = g.x; game.player.y = g.y + 20;
+  game._tick(0.001);
+  assert.ok(!g.prowling && m.tonight.interrupted, 'gnomer flees');
+  assert.ok(g.hooded, 'stays hooded while fleeing');
+  for (let i = 0; i < 60 * 300 && g.hooded; i++) g.update(1 / 60, game.world, game.minutes, game.weather);
+  assert.ok(!g.hooded && !g.area.outdoor, 'hood comes off only once back indoors');
+  assert.ok(m.found.some((f) => f.id.endsWith('_seen')), 'sighting clue found');
+  const before = m.attacks.length, night = game.day;
+  game.sleep(false);
+  assert.equal(m.attacks.length, before, 'no attack after being scared off');
+  assert.equal(m.nextAttack, night + 1, 'tries again the next night');
+  assert.ok(plan.victim);
+  console.log('night prowl: ok');
+}
+
+// 11) Cranberries regrow; requests can be delivered; difficulty presets apply
+{
+  const { game } = makeGame(); game.newGame();
+  const f = game.world.field, farm = game.farm, x = f.x, y = f.y;
+  farm.clearDebris(x, y); farm.till(x, y); farm.plant(x, y, 'cranberry');
+  for (let d = 0; d < 5; d++) { farm.water(x, y); farm.nightly(); }
+  assert.equal(farm.harvest(x, y), 'cranberry');
+  assert.equal(farm.plot(x, y).c, 'cranberry', 'plant stays after harvest');
+  for (let d = 0; d < 2; d++) { farm.water(x, y); farm.nightly(); }
+  assert.ok(farm.isMature(farm.plot(x, y)), 'fruits again after 2 days');
+
+  game.quests = [{ npc: 'barnaby', item: 'pumpkin', qty: 1, due: game.day + 3 }];
+  game.inv.add('pumpkin', 1);
+  const money = game.money, fr = game.npcs.get('barnaby').friendship;
+  game.deliverQuest(game.npcs.get('barnaby'));
+  assert.ok(game.money > money && game.npcs.get('barnaby').friendship > fr && !game.quests.length, 'request delivered');
+  let made = 0;
+  for (let i = 0; i < 30; i++) { game.quests = []; game.day = 3; if (game._newQuest()) made++; }
+  assert.ok(made > 5, 'requests get generated');
+
+  const { game: easy } = makeGame(); easy.newGame('easy');
+  assert.equal(easy.mystery.nextAttack, 3); assert.equal(easy.mystery.maxVictims, 5);
+  const { game: hard } = makeGame(); hard.newGame('hard');
+  assert.equal(hard.mystery.nextAttack, 2); hard.day = 2; assert.equal(hard.omenTonight, false);
+  console.log('regrow, requests, difficulty: ok');
+}
+
 console.log(`\nAll checks passed across ${results.games} simulated seasons.`);

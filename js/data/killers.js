@@ -12,6 +12,7 @@
 //   snoop    - hidden in furniture in the Gnomer's house
 //   dialogue - told by `witness` once hearts >= minHearts and attacks >= afterAttack
 //   nearmiss - appears when a charm blocks an attack (and as a late fallback)
+//   sighting - what you see if you catch the Gnomer on the prowl at night
 // herrings: misleading evidence, only used when this candidate is innocent.
 // alibi: a dialogue clue that clears this candidate, only when innocent.
 
@@ -28,6 +29,7 @@ export const KILLERS = {
       { id: 'od_talk1', kind: 'dialogue', witness: 'tib', minHearts: 1, afterAttack: 1 },
       { id: 'od_talk2', kind: 'dialogue', witness: 'marigold', minHearts: 1, afterAttack: 2 },
       { id: 'od_near', kind: 'nearmiss' },
+      { id: 'od_seen', kind: 'sighting' },
     ],
     herrings: [{ id: 'od_herring1', kind: 'scene' }, { id: 'od_herring2', kind: 'snoop' }],
     alibi: { id: 'od_alibi', witness: 'barnaby', minHearts: 0, afterAttack: 2 },
@@ -44,6 +46,7 @@ export const KILLERS = {
       { id: 'ba_talk1', kind: 'dialogue', witness: 'hollis', minHearts: 1, afterAttack: 1 },
       { id: 'ba_talk2', kind: 'dialogue', witness: 'odessa', minHearts: 1, afterAttack: 2 },
       { id: 'ba_near', kind: 'nearmiss' },
+      { id: 'ba_seen', kind: 'sighting' },
     ],
     herrings: [{ id: 'ba_herring1', kind: 'scene' }, { id: 'ba_herring2', kind: 'snoop' }],
     alibi: { id: 'ba_alibi', witness: 'wren', minHearts: 0, afterAttack: 2 },
@@ -60,6 +63,7 @@ export const KILLERS = {
       { id: 'fe_talk1', kind: 'dialogue', witness: 'wren', minHearts: 1, afterAttack: 1 },
       { id: 'fe_talk2', kind: 'dialogue', witness: 'tib', minHearts: 1, afterAttack: 2 },
       { id: 'fe_near', kind: 'nearmiss' },
+      { id: 'fe_seen', kind: 'sighting' },
     ],
     herrings: [{ id: 'fe_herring1', kind: 'scene' }, { id: 'fe_herring2', kind: 'snoop' }],
     alibi: { id: 'fe_alibi', witness: 'odessa', minHearts: 0, afterAttack: 2 },
@@ -76,6 +80,7 @@ export const KILLERS = {
       { id: 'wr_talk1', kind: 'dialogue', witness: 'hollis', minHearts: 1, afterAttack: 1 },
       { id: 'wr_talk2', kind: 'dialogue', witness: 'marigold', minHearts: 1, afterAttack: 2 },
       { id: 'wr_near', kind: 'nearmiss' },
+      { id: 'wr_seen', kind: 'sighting' },
     ],
     herrings: [{ id: 'wr_herring1', kind: 'scene' }, { id: 'wr_herring2', kind: 'snoop' }],
     alibi: { id: 'wr_alibi', witness: 'tib', minHearts: 0, afterAttack: 2 },
@@ -92,6 +97,7 @@ export const KILLERS = {
       { id: 'ho_talk1', kind: 'dialogue', witness: 'fennel', minHearts: 1, afterAttack: 1 },
       { id: 'ho_talk2', kind: 'dialogue', witness: 'barnaby', minHearts: 1, afterAttack: 2 },
       { id: 'ho_near', kind: 'nearmiss' },
+      { id: 'ho_seen', kind: 'sighting' },
     ],
     herrings: [{ id: 'ho_herring1', kind: 'scene' }, { id: 'ho_herring2', kind: 'snoop' }],
     alibi: { id: 'ho_alibi', witness: 'fennel', minHearts: 0, afterAttack: 2 },
@@ -106,4 +112,11 @@ export const MYSTERY = {
   herringChance: 0.6,     // chance an attack scene also gets a red herring
   patternAfter: 2,        // attacks before villagers start noticing the victim pattern
   patternWitnesses: ['tib', 'marigold', 'odessa', 'hollis', 'barnaby', 'fennel', 'wren'],
+};
+
+// Difficulty presets (chosen on the title screen, saved with the game).
+export const DIFFICULTY = {
+  easy:   { intervalAdd: 1, maxVictims: 5, herringChance: 0.3, heartsAdd: -1, omen: true, hints: true, firstAttack: [3, 3] },
+  normal: { intervalAdd: 0, maxVictims: 4, herringChance: 0.6, heartsAdd: 0, omen: true, hints: true, firstAttack: [2, 3] },
+  hard:   { intervalAdd: 0, maxVictims: 4, herringChance: 0.9, heartsAdd: 1, omen: false, hints: false, firstAttack: [2, 2] },
 };

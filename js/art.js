@@ -262,6 +262,16 @@ function cropSprites() {
     })();
     out.pumpkin = [seedStage(), vine, flower, small, ripe];
   }
+  // cranberry (regrows): a low bush that fills with red berries
+  {
+    const bushy = (berries) => {
+      const [c, g] = mk(16, 16);
+      R(g, 3, 8, 10, 6, '#4f6a2e'); R(g, 4, 6, 8, 3, '#5f7f3a'); R(g, 5, 7, 3, 1, '#7d9a48'); R(g, 3, 14, 10, 1, '#3c4622');
+      if (berries) for (const [x, y] of [[4, 9], [7, 8], [10, 10], [6, 11], [9, 7], [11, 12], [5, 12]]) { R(g, x, y, 2, 2, '#b8283a'); P(g, x, y, '#e8606a'); }
+      return c;
+    };
+    out.cranberry = [seedStage(), sprout('#6f8f3a'), bushy(false), bushy(true)];
+  }
   return out;
 }
 
@@ -774,14 +784,15 @@ function itemIcon(id) {
     case 'hoe': R(g, 3, 12, 2, 2, PAL.woodD); for (let i = 0; i < 9; i++) R(g, 4 + i, 11 - i, 2, 2, PAL.wood); R(g, 10, 1, 5, 3, '#9aa0a4'); R(g, 13, 1, 2, 5, '#7a8084'); break;
     case 'watering_can': R(g, 3, 6, 8, 7, '#5f8aa0'); R(g, 3, 6, 8, 1, '#8fb4c6'); R(g, 11, 7, 3, 1, '#5f8aa0'); R(g, 13, 5, 2, 2, '#5f8aa0'); R(g, 1, 7, 2, 4, '#4a7088'); R(g, 5, 3, 4, 3, '#4a7088'); R(g, 6, 4, 2, 1, PAL.ink); break;
     case 'scythe': for (let i = 0; i < 11; i++) R(g, 3 + i, 14 - i, 2, 1, PAL.wood); R(g, 7, 2, 8, 2, '#c8ccd0'); R(g, 4, 3, 4, 2, '#c8ccd0'); R(g, 3, 5, 2, 1, '#c8ccd0'); R(g, 7, 2, 8, 1, '#ffffff'); break;
-    case 'seed_turnip': case 'seed_garlic': case 'seed_pumpkin': {
-      const col = { seed_turnip: PAL.turnipP, seed_garlic: '#c8b98a', seed_pumpkin: PAL.pumpkin }[id];
+    case 'seed_turnip': case 'seed_garlic': case 'seed_pumpkin': case 'seed_cranberry': {
+      const col = { seed_turnip: PAL.turnipP, seed_garlic: '#c8b98a', seed_pumpkin: PAL.pumpkin, seed_cranberry: '#b8283a' }[id];
       R(g, 3, 2, 10, 13, '#e3d4b0'); R(g, 3, 2, 10, 2, '#c8b78f'); R(g, 4, 6, 8, 7, col); R(g, 6, 8, 4, 3, shade(col, 0.35)); R(g, 3, 14, 10, 1, '#a89870');
       break;
     }
     case 'turnip': g.drawImage(crops.turnip[3], 0, -1); break;
     case 'garlic': g.drawImage(crops.garlic[3], 0, -1); break;
     case 'pumpkin': g.drawImage(crops.pumpkin[4], 0, 0); break;
+    case 'cranberry': for (const [x, y] of [[4, 6], [8, 5], [6, 9], [10, 9], [7, 12], [3, 10]]) { R(g, x, y, 3, 3, '#b8283a'); P(g, x, y, '#e8606a'); } R(g, 8, 2, 1, 4, PAL.leafG); R(g, 9, 2, 3, 1, '#5f7f3a'); break;
     case 'tea_tin': R(g, 4, 4, 8, 10, PAL.teal); R(g, 4, 4, 8, 2, shade(PAL.teal, 0.3)); R(g, 5, 8, 6, 3, PAL.yellow); R(g, 4, 13, 8, 1, shade(PAL.teal, -0.3)); break;
     case 'aster_bouquet': R(g, 7, 8, 2, 7, PAL.leafG); R(g, 6, 11, 4, 2, PAL.cream); for (const [x, y] of [[4, 4], [8, 3], [11, 5], [6, 7], [10, 8]]) { R(g, x, y, 3, 3, PAL.purple); P(g, x + 1, y + 1, PAL.yellow); } break;
     case 'hard_cheese': R(g, 2, 7, 12, 7, '#e8c25a'); R(g, 2, 5, 9, 2, '#f2d27a'); R(g, 11, 5, 3, 2, '#e8c25a'); P(g, 5, 9, '#c89a3a'); P(g, 9, 11, '#c89a3a'); P(g, 11, 8, '#c89a3a'); break;

@@ -1,6 +1,6 @@
 // The Gnomer mystery: who it is, who gets gnomed, which clues exist and where.
 // Everything is driven by js/data/killers.js; this module only applies the rules.
-import { KILLERS, MYSTERY } from './data/killers.js';
+import { KILLERS, MYSTERY, DIFFICULTY } from './data/killers.js';
 import { VILLAGERS } from './data/villagers.js';
 
 // Flat index of every clue in the data: id -> { id, subject, kind, role, witness?, minHearts?, afterAttack? }
@@ -33,12 +33,20 @@ export class Mystery {
     this.lastTalked = null;
     this.solved = false;
     this.outcome = null; // null | 'win' | 'wrong' | 'overrun' | 'season'
+    this.difficulty = 'normal';
+    this.tonight = null;  // planned attack for the coming night (only exists late on attack nights)
+    this.interrupted = 0; // night number when the player last scared the Gnomer off
   }
 
-  newGame(rng, world) {
+  get diff() { return DIFFICULTY[this.difficulty] || DIFFICULTY.normal; }
+  get maxVictims() { return this.diff.maxVictims; }
+
+  newGame(rng, world, difficulty = 'normal') {
+    this.difficulty = DIFFICULTY[difficulty] ? difficulty : 'normal';
     const cands = VILLAGERS.filter((v) => v.candidate).map((v) => v.id);
     this.gnomerId = rng.pick(cands);
-    this.nextAttack = rng.int(MYSTERY.firstAttack[0], MYSTERY.firstAttack[1]);
+    const fa = this.diff.firstAttack || MYSTERY.firstAttack;
+    this.nextAttack = rng.int(fa[0], fa[1]);
     // Hide snoopable evidence: the Gnomer's real clues, plus innocent suspects' red herrings.
     for (const id of cands) {
       const k = KILLERS[id];
@@ -98,29 +106,53 @@ export class Mystery {
     return best;
   }
 
-  // Runs while the player sleeps. Returns the attack record, or null if the Gnomer rested.
-  night(game) {
-    if (this.solved || this.outcome) return null;
-    const night = game.day;
-    if (night < this.nextAttack) return null;
-    const k = KILLERS[this.gnomerId];
-    this.nextAttack = night + game.rng.int(k.interval[0], k.interval[1]);
+  // Decide tonight's victim and where it will happen (also used for the Gnomer's night prowl).
+  planTonight(game) {
+    if (this.tonight || this.solved || this.outcome || game.day < this.nextAttack) return this.tonight;
     const victim = this.pickVictim(game);
     if (!victim) return null;
-    const npc = game.npcs.get(victim);
     const world = game.world;
-    const locId = npc.lastSeenLocation(game.weather);
+    const locId = game.npcs.get(victim).lastSeenLocation(game.weather);
     const loc = (locId && world.locations[locId]) || { ...world.areaById[byId[victim].home].door };
     if (!locId) loc.y += 1;
     const spot = world.findOpenTile(loc.x, loc.y, this._occupied(world));
+    this.tonight = { night: game.day, victim, x: spot.x, y: spot.y, place: locId || 'home', interrupted: false };
+    return this.tonight;
+  }
+
+  // Runs while the player sleeps. Returns the attack record, or null if the Gnomer rested.
+  night(game) {
+    if (this.solved || this.outcome) { this.tonight = null; return null; }
+    const night = game.day;
+    if (night < this.nextAttack) { this.tonight = null; return null; }
+    const plan = this.tonight && this.tonight.night === night ? this.tonight : this.planTonight(game);
+    this.tonight = null;
+    if (!plan) return null;
+    if (plan.interrupted) { // scared off by the player: try again tomorrow night
+      this.interrupted = night;
+      this.nextAttack = night + 1;
+      return null;
+    }
+    const k = KILLERS[this.gnomerId];
+    this.nextAttack = night + game.rng.int(k.interval[0], k.interval[1]) + this.diff.intervalAdd;
+    const { victim } = plan;
     const blocked = (this.protect[victim] || 0) > 0;
     if (blocked) this.protect[victim]--;
-    const attack = { night, victim, blocked, x: spot.x, y: spot.y, place: locId || 'home' };
+    const attack = { night, victim, blocked, x: plan.x, y: plan.y, place: plan.place };
     this.attacks.push(attack);
     this._spawnScene(attack, game);
     const pool = blocked ? 'foiled' : 'gnomed';
     this.news.push({ day: night + 1, type: pool, victim, n: game.rng.int(0, 99), place: attack.place });
     return attack;
+  }
+
+  // The player caught the Gnomer on the prowl: the attack is off and they glimpsed something.
+  interrupt(day) {
+    if (!this.tonight || this.tonight.interrupted) return null;
+    this.tonight.interrupted = true;
+    const seen = KILLERS[this.gnomerId].clues.find((c) => c.kind === 'sighting');
+    if (seen && !this.isFound(seen.id)) { this.addFound(seen.id, day); return CLUES[seen.id]; }
+    return null;
   }
 
   _occupied(world) {
@@ -141,7 +173,7 @@ export class Mystery {
     // once the scene clues run out, or if the player is still short of evidence by the 3rd attack.
     const evidenceKnown = Object.values(CLUES).filter((c) => this.isActive(c) && c.role === 'evidence' && (this.isFound(c.id) || this.spawned.includes(c.id))).length;
     if (near && !this.spawned.includes(near.id) && (attack.blocked || !nextScene || (this.attacks.length >= 3 && evidenceKnown < 4))) want.push(near.id);
-    if (rng.chance(MYSTERY.herringChance)) {
+    if (rng.chance(this.diff.herringChance)) {
       const herrings = Object.values(CLUES).filter((c) => c.role === 'herring' && c.kind === 'scene' && this.isActive(c) && !this.spawned.includes(c.id));
       if (herrings.length) want.push(rng.pick(herrings).id);
     }
@@ -202,7 +234,7 @@ export class Mystery {
       if (c.kind !== 'dialogue' || !this.isActive(c) || this.isFound(c.id)) continue;
       if (this.attacks.length < (c.afterAttack || 0)) continue;
       if (this.witnessFor(c, game) !== villagerId) continue;
-      if (game.npcs.get(villagerId).hearts < (c.minHearts || 0)) { lockedClue = lockedClue || c; continue; }
+      if (game.npcs.get(villagerId).hearts < Math.max(0, (c.minHearts || 0) + this.diff.heartsAdd)) { lockedClue = lockedClue || c; continue; }
       return { clue: c, locked: false };
     }
     return lockedClue ? { clue: lockedClue, locked: true } : null;
@@ -217,7 +249,7 @@ export class Mystery {
 
   checkLoss(day) {
     if (this.solved || this.outcome) return this.outcome;
-    if (this.victims.length >= MYSTERY.maxVictims) this.outcome = 'overrun';
+    if (this.victims.length >= this.maxVictims) this.outcome = 'overrun';
     else if (day > MYSTERY.seasonDays) this.outcome = 'season';
     return this.outcome;
   }
@@ -226,7 +258,7 @@ export class Mystery {
     return {
       g: this.gnomerId, next: this.nextAttack, attacks: this.attacks, found: this.found, spawned: this.spawned,
       sparkles: this.sparkles, snoop: this.snoop, notes: this.notes, protect: this.protect, news: this.news,
-      last: this.lastTalked, solved: this.solved, outcome: this.outcome,
+      last: this.lastTalked, solved: this.solved, outcome: this.outcome, diff: this.difficulty, intr: this.interrupted,
     };
   }
 
@@ -236,6 +268,7 @@ export class Mystery {
     m.nextAttack = o.next; m.attacks = o.attacks || []; m.found = o.found || []; m.spawned = o.spawned || [];
     m.sparkles = o.sparkles || []; m.snoop = o.snoop || {}; m.notes = o.notes || {}; m.protect = o.protect || {};
     m.news = o.news || []; m.lastTalked = o.last || null; m.solved = !!o.solved; m.outcome = o.outcome || null;
+    m.difficulty = DIFFICULTY[o.diff] ? o.diff : 'normal'; m.interrupted = o.intr || 0;
     return m;
   }
 }
