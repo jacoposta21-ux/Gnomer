@@ -253,3 +253,9 @@ body.touch #prompt { bottom: 4.4rem; left: auto; right: 6.2rem; transform: none;
 /* ---------- step 3 ---------- */
 #title-diff { display: flex; gap: 0.35rem; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 0.4rem; color: var(--muted); font-size: 0.85rem; }
 #title-diff .diff-help { flex-basis: 100%; font-size: 0.75rem; margin-top: 0.2rem; }
+
+/* ---------- step 4 ---------- */
+#title-extra { display: flex; gap: 0.35rem; justify-content: center; flex-wrap: wrap; margin-top: 0.6rem; }
+.ach { opacity: 0.55; }
+.ach.got { opacity: 1; }
+.ach-icon { font-size: 1.3rem; width: 1.6rem; text-align: center; color: var(--accent2); }

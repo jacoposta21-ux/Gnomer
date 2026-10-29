@@ -39,6 +39,36 @@ export default {
     omen: 'The Gnomer is restless tonight…',
   },
 
+  lang: { en: 'English', it: 'Italiano' },
+
+  achievement: {
+    title: 'Achievements',
+    unlocked: 'Achievement unlocked: {name}!',
+    count: '{n} of {total} unlocked. Achievements and statistics carry over between games.',
+    first_harvest: { name: 'First Harvest', desc: 'Harvest your first crop.' },
+    green_thumb: { name: 'Green Thumb', desc: 'Harvest 100 crops (across all games).' },
+    pumpkin_patch: { name: 'Pumpkin Patch', desc: 'Harvest 5 pumpkins in one game.' },
+    friend: { name: 'A Real Friend', desc: 'Reach 3 hearts with a villager.' },
+    beloved: { name: 'Beloved Farmer', desc: 'Reach 2 hearts with every un-gnomed villager.' },
+    detective: { name: 'Detective', desc: 'Find 10 clues in one game.' },
+    snoop: { name: 'Professional Snoop', desc: 'Find 3 clues by searching houses.' },
+    guardian: { name: 'Guardian', desc: 'Foil a gnoming with a charm.' },
+    night_owl: { name: 'Night Owl', desc: 'Scare the Gnomer away at night.' },
+    helper: { name: 'Good Neighbour', desc: 'Complete 5 villager requests (across all games).' },
+    rich: { name: 'Turnip Tycoon', desc: 'Have 3,000 gold at once.' },
+    cat_person: { name: 'Cat Person', desc: 'Pet cats 10 times (across all games).' },
+    case_closed: { name: 'Case Closed', desc: 'Catch the Gnomer.' },
+    flawless: { name: 'Not a Single Gnome', desc: 'Catch the Gnomer before anyone is gnomed.' },
+    hard_case: { name: 'Hard-Boiled', desc: 'Catch the Gnomer on Hard.' },
+    all_suspects: { name: 'Usual Suspects', desc: 'Catch every one of the five possible Gnomers.' },
+  },
+
+  stats: {
+    title: 'Statistics',
+    games: 'Games started', wins: 'Gnomers caught', losses: 'Games lost', days: 'Days played',
+    harvested: 'Crops harvested', earned: 'Gold earned', clues: 'Clues found', quests: 'Requests completed', pets: 'Cats petted',
+  },
+
   difficulty: {
     label: 'Difficulty:',
     easy: 'Easy', normal: 'Normal', hard: 'Hard',
@@ -174,7 +204,7 @@ export default {
   intro: {
     title: 'A letter on the doormat',
     body: 'Dear nibling,\n\nIf you are reading this, the farm is yours. The roof leaks, the field is a jungle and the bed squeaks in D minor. I love it all.\n\nOne small thing: villagers in Mildew Hollow have started turning into garden gnomes. Someone in town is doing it. Find them, would you?\n\nPlant garlic. Trust nobody. Water daily.\n\nLove,\nGreat-Aunt Philippa',
-    tips: 'Move: WASD/arrows · Use/interact: E or Space · Hotbar: 1-5 or wheel · Notebook: Tab/N · Bag: I · Pause: Esc',
+    tips: 'Move: WASD/arrows · Use/interact: E or Space · Hotbar: 1-5 or wheel · Notebook: Tab/N · Bag: I · Pause: Esc · Gamepad supported',
     ok: 'Let\'s farm',
   },
 
@@ -185,6 +215,8 @@ export default {
       'E or Space uses the selected tool, or talks/interacts with whatever you face. You can also click the world with the mouse.',
       'Talk to villagers once a day to make friends. Choose "Give a gift…" while chatting to hand over presents or charms (one present per villager per day).',
       'Pick hotbar slots with 1-5, the mouse wheel, or by tapping them. Open the Bag (I) to rearrange items.',
+      'Menus work with the keyboard too: arrows/WASD to move, E or Space to choose, Esc to close.',
+      'Gamepad: left stick or d-pad to move, A use, B back/pause, X bag, Y notebook, LB/RB hotbar.',
       'Farming: clear debris with the scythe, till with the hoe, plant seeds, and water every day. Rain waters for you.',
       'Put crops in the shipping bin to sell them overnight, or sell them at the store (9:00-17:00, closed Sundays).',
       'Sleep in your bed to save and start a new day. Stay up past 2:00 and you will pass out (and lose some gold).',

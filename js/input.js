@@ -17,6 +17,7 @@ export class Input {
     this.touchMode = false;
     this.onFirstGesture = null;
     this._wheelT = 0;
+    this.pad = { x: 0, y: 0, prev: [], axisDir: null };
 
     window.addEventListener('keydown', (e) => {
       const a = KEYMAP[e.code];
@@ -92,8 +93,32 @@ export class Input {
 
   _joyEnd() { this.joy.id = null; this.joy.x = this.joy.y = 0; if (this.els) this._joyShow(false); }
 
+  // Gamepad (standard mapping): stick/d-pad move, A use, B back/pause, X bag, Y notebook, LB/RB hotbar.
+  poll() {
+    const pads = (navigator.getGamepads && navigator.getGamepads()) || [];
+    const gp = [...pads].find((p) => p && p.connected);
+    this.pad.x = this.pad.y = 0;
+    if (!gp) return;
+    const map = { 0: 'action', 1: 'pause', 2: 'bag', 3: 'notebook', 4: 'hotPrev', 5: 'hotNext', 9: 'pause', 12: 'up', 13: 'down', 14: 'left', 15: 'right' };
+    gp.buttons.forEach((b, i) => {
+      const down = b.pressed || b.value > 0.5;
+      if (down && !this.pad.prev[i] && map[i]) { this.queue.push(map[i]); this._gesture(); }
+      this.pad.prev[i] = down;
+    });
+    let x = gp.axes[0] || 0, y = gp.axes[1] || 0;
+    if (Math.hypot(x, y) < 0.25) x = y = 0;
+    const b = gp.buttons;
+    if (b[14] && b[14].pressed) x = -1; if (b[15] && b[15].pressed) x = 1;
+    if (b[12] && b[12].pressed) y = -1; if (b[13] && b[13].pressed) y = 1;
+    this.pad.x = x; this.pad.y = y;
+    // the stick also navigates menus: one step each time it is pushed past the threshold
+    const dir = Math.abs(x) > 0.6 || Math.abs(y) > 0.6 ? (Math.abs(x) > Math.abs(y) ? (x > 0 ? 'right' : 'left') : (y > 0 ? 'down' : 'up')) : null;
+    if (dir && dir !== this.pad.axisDir) this.queue.push(dir);
+    this.pad.axisDir = dir;
+  }
+
   get move() {
-    let x = 0, y = 0;
+    let x = this.pad.x, y = this.pad.y;
     if (this.held.has('left')) x -= 1;
     if (this.held.has('right')) x += 1;
     if (this.held.has('up')) y -= 1;

@@ -18,6 +18,7 @@ import { t, tList, fmt } from './i18n.js';
 import { Audio } from './audio.js';
 import { Save } from './save.js';
 import { Platform } from './platform.js';
+import { Progress } from './progress.js';
 
 const STEP = 1 / 240; // fixed simulation step: identical behaviour at any refresh rate
 const MAX_ENERGY = 100;
@@ -184,6 +185,7 @@ export class Game {
     const gold = this.questReward(q);
     this.money += gold; this.stats.earned += gold;
     this.stats.quests = (this.stats.quests || 0) + 1;
+    Progress.add('quests');
     this.addFriendship(npc, 60);
     this.emote(npc, 'heart');
     Audio.play('coin');
@@ -198,6 +200,13 @@ export class Game {
       pages.push({ who: npc.id, text: `${t('quest.secret')} ${t(`clue.${g.clue.id}.text`)}` });
     }
     this.ui.dialogue(pages, () => { npc.paused = false; });
+  }
+
+  checkAchievements() {
+    for (const id of Progress.check(this)) {
+      Audio.play('win');
+      this.ui.toast(t('achievement.unlocked', { name: t(`achievement.${id}.name`) }), 'clue');
+    }
   }
 
   // ------------------------------------------------------------ tutorial
@@ -219,6 +228,7 @@ export class Game {
   // ------------------------------------------------------------ main loop
   frame(dt) {
     dt = Math.min(dt, 0.25);
+    this.input.poll();
     const actions = this.input.consume();
     if (this.mode !== 'play') { this.ui.handleActions(actions, this); return; }
     if (this.ui.blocking) {
@@ -259,6 +269,8 @@ export class Game {
     this._checkPortal();
     for (const n of this.npcs.values()) n.update(dt, this.world, this.minutes, this.weather);
     for (const c of this.cats) c.update(dt, this.world);
+    this._achT = (this._achT || 0) - dt;
+    if (this._achT <= 0) { this._achT = 1; this.checkAchievements(); }
     this.banterT -= dt;
     if (this.banterT <= 0) { this.banterT = 9 + Math.random() * 9; this._banter(); }
     for (const e of this.emotes) e.t -= dt;
@@ -333,6 +345,7 @@ export class Game {
   petCat(cat) {
     if (cat.pettedDay === this.day) { this.ui.toast(t('msg.catIgnores')); return; }
     cat.pettedDay = this.day;
+    Progress.add('pets');
     cat.wait = Math.max(cat.wait, 3);
     this.energy = Math.min(this.maxEnergy, this.energy + 5);
     this.emote(cat, 'heart');
@@ -457,6 +470,9 @@ export class Game {
     this.farm.harvest(x, y);
     this.inv.add(produce, 1);
     this.stats.harvested++;
+    this.stats.byCrop = this.stats.byCrop || {};
+    this.stats.byCrop[produce] = (this.stats.byCrop[produce] || 0) + 1;
+    Progress.add('harvested');
     Audio.play('pickup');
     this.ui.toast(t('msg.harvested', { item: t(`item.${produce}.name`) }));
   }
@@ -604,6 +620,7 @@ export class Game {
 
   // ------------------------------------------------------------ mystery actions
   _clueToast(id) {
+    Progress.add('clues');
     Audio.play('clue');
     this.ui.toast(t('msg.clueFound', { title: t(`clue.${id}.title`) }), 'clue');
   }
@@ -627,6 +644,7 @@ export class Game {
     }
     const clue = this.mystery.search(obj.key, this.day);
     if (clue) {
+      this.stats.snooped = (this.stats.snooped || 0) + 1;
       this._clueToast(clue.id);
       this.ui.say(null, `${t('search.found')}\n\n${t(`clue.${clue.id}.title`)}: ${t(`clue.${clue.id}.text`)}`);
       return;
@@ -638,6 +656,8 @@ export class Game {
   accuse(id) {
     const right = this.mystery.accuse(id);
     if (right) {
+      Progress.add('wins'); Progress.caught(this.mystery.gnomerId);
+      this.checkAchievements();
       for (const n of this.npcs.values()) n.gnomed = false;
       for (const o of this.world.objects) if (o.kind === 'gnome') this.world.removeObject(o);
       this.mystery.sparkles = [];
@@ -647,6 +667,7 @@ export class Game {
       this.save();
       this.ui.showEnding('win', this);
     } else {
+      Progress.add('losses');
       Audio.play('lose');
       Save.clear();
       this.ui.showEnding('wrong', this, id);
@@ -715,6 +736,8 @@ export class Game {
     const report = { day: this.day, shipped: this.bin.map((b) => ({ ...b, value: this.sellValue(b.id) * b.qty })), passedOut, penalty: 0 };
     const income = this.binValue();
     this.money += income; this.stats.earned += income;
+    if (income) Progress.add('earned', income);
+    Progress.add('days');
     this.bin = [];
     report.income = income;
     if (passedOut) { report.penalty = Math.min(150, Math.floor(this.money * 0.1)); this.money -= report.penalty; }
@@ -741,6 +764,7 @@ export class Game {
 
     const outcome = this.mystery.checkLoss(this.day);
     if (outcome) {
+      Progress.add('losses');
       Save.clear();
       Audio.play('lose');
       this.ui.showEnding(outcome, this);

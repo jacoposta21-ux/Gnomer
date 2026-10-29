@@ -8,13 +8,14 @@ import { UI } from './ui.js';
 import { Game } from './game.js';
 import { Save } from './save.js';
 import { Audio } from './audio.js';
+import { Progress } from './progress.js';
 
 const $ = (s) => document.querySelector(s);
 
 async function boot() {
   await Platform.init();
   Platform.loadingStart();
-  await loadLocale(Platform.locale());
+  await loadLocale(Save.settings().lang || Platform.locale());
   $('.loading-text').textContent = t('ui.loading');
   await new Promise((r) => requestAnimationFrame(r)); // let the loading screen paint
 
@@ -36,7 +37,7 @@ async function boot() {
     ui.showHud(true);
     game.mode = 'play';
     renderer.snap(game);
-    if (fresh) { game.save(); ui.showIntro(game); }
+    if (fresh) { game.save(); ui.showIntro(game); Progress.add('games'); }
   };
 
   const goTitle = () => {
@@ -56,6 +57,12 @@ async function boot() {
       onNew: () => { Save.clear(); game.newGame(diff()); start(true); },
       difficulty: diff(),
       onDifficulty: (d) => { const st = Save.settings(); st.difficulty = d; Save.saveSettings(st); },
+      onLanguage: async (lang) => {
+        const st = Save.settings(); st.lang = lang; Save.saveSettings(st);
+        await loadLocale(lang);
+        ui.refreshLabels();
+        goTitle();
+      },
     });
   };
   ui.onQuit = goTitle;

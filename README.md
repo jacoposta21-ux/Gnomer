@@ -65,6 +65,10 @@ console.
 | Mute | M | Speaker button |
 
 In dialogue, E/Space/click advances. Pick answers with the arrow keys + E, the number keys or a click.
+Every menu also works from the keyboard: arrows/WASD move the highlight, E/Space choose, Esc closes.
+
+**Gamepad** (standard mapping): left stick or d-pad to move and to navigate menus, A use/interact,
+B back/pause, X bag, Y notebook, LB/RB hotbar, Start pause.
 
 ## How to play (short)
 
@@ -83,6 +87,14 @@ In dialogue, E/Space/click advances. Pick answers with the arrow keys + E, the n
 - **Charms:** at the workbench, craft a Garlic Garland (2 garlic + 1 turnip) or a Pumpkin Ward
   (1 pumpkin + 1 garlic, which blocks two attempts). Give one to whoever you think is next. A foiled
   attack leaves an extra clue. The Gnomer won't go after the same charmed villager twice in a row.
+- **Night prowls:** on attack nights (you get a warning, except on Hard) the Gnomer sneaks out
+  between 22:30 and 1:30, as a hooded silhouette, to where tonight's victim was last seen. Reach
+  them and they flee: nobody is gnomed that night and you get a "night sighting" clue.
+- **Requests:** villagers post requests (notice board / Notebook). Deliver in time for gold, hearts
+  and sometimes a secret clue.
+- **Cranberries** keep fruiting every 2 days after the first harvest.
+- **Difficulty** (title screen): Easy, Normal or Hard, chosen per new game.
+- **Achievements & statistics** carry over between games (title screen or pause menu).
 - **Accuse** the Gnomer at the lectern in the town hall (8:00-20:00). Get it right and everyone is
   un-gnomed. Get it wrong and *you* become a gnome. You also lose if four villagers are gnomed or the
   28-day season ends first.
@@ -138,6 +150,7 @@ There are no ads, external links, logins or custom fullscreen button.
 index.html            entry point (loads the CrazyGames SDK + js/main.js)
 assets/style.css      all HTML/CSS overlay styling
 strings/en.js         EVERY player-facing string (dialogue, clues, UI, items...)
+strings/it.js         Italian translation
 js/main.js            boot sequence + game loop
 js/game.js            game state & rules glue: time, interactions, night cycle, endings
 js/platform.js        CrazyGames SDK v3 adapter with graceful fallbacks
@@ -153,7 +166,8 @@ js/inventory.js       slot inventory + hotbar
 js/dialogue.js        line selection, reactions, gift reactions
 js/mystery.js         the Gnomer: victim choice, attacks, clue placement, gossip, endings
 js/ui.js              HUD, dialogue, menus, notebook, shop, bin, crafting, title, endings
-js/audio.js           generated WebAudio sound effects + mute
+js/audio.js           generated WebAudio sound effects + generative music + mute
+js/progress.js        lifetime achievements and statistics
 js/save.js            versioned save/load through the platform adapter
 js/time.js            clock, store hours, door locks, day/night curve
 js/data/*.js          content: map, items, crops, recipes, villagers, killer profiles
@@ -172,9 +186,11 @@ tools/sim-test.js     headless season simulation tests
 - **Gnomer profiles and clues:** add to `js/data/killers.js` (victim rule, interval, clues, red
   herrings, alibi) with texts under `killer.<id>` and `clue.<clueId>`. New victim rules go in
   `Mystery.pickVictim`.
-- **Localization:** copy `strings/en.js` to `strings/it.js`, translate the values (keep the keys and
-  `{placeholders}`), and add `'it'` to `SUPPORTED` in `js/i18n.js`. The locale comes from the SDK,
-  falling back to the browser language.
+- **Localization:** English (`strings/en.js`) and Italian (`strings/it.js`) are included; players
+  switch language on the title screen. To add another language, copy `strings/en.js` to
+  `strings/<lang>.js`, translate the values (keep the keys and `{placeholders}`), and add the code to
+  `SUPPORTED` in `js/i18n.js`. The default comes from the SDK locale, then the browser language.
+  `node tools/sim-test.js` fails if a translation is missing a key or a placeholder.
 - **Save format:** saves carry a version number (`SAVE_VERSION` in `js/save.js`). When the format
   changes, bump it and add a `MIGRATIONS[n]` function that upgrades a version-n save.
 
@@ -191,8 +207,6 @@ tools/sim-test.js     headless season simulation tests
 - **Romance:** heart events at 3/5 hearts, dating two eligible villagers, and a wedding (the
   Gnomer may get jealous).
 - **More killers and mysteries:** new victim rules (e.g. "whoever got the last gift"), an
-  accomplice twist, more red-herring types, and night patrols for catching the Gnomer in the act.
-- **Italian localization** (`strings/it.js`), plus a language picker.
-- **Quality of life:** a storage chest, a sprinkler craftable, keyboard navigation for every
-  menu, gamepad support, and a cloud-save conflict prompt.
-- **Audio:** a generated ambient music loop per time of day.
+  accomplice twist and more red-herring types.
+- **Quality of life:** a storage chest, a sprinkler craftable, a gamepad button-prompt mode, and a
+  cloud-save conflict prompt.

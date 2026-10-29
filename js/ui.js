@@ -9,6 +9,9 @@ import { HOTBAR } from './inventory.js';
 import { formatClock, dayOfWeek, SEASON_DAYS } from './time.js';
 import { Audio } from './audio.js';
 import { Save } from './save.js';
+import { ACHIEVEMENTS } from './data/achievements.js';
+import { Progress } from './progress.js';
+import { SUPPORTED, currentLang } from './i18n.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -44,6 +47,16 @@ export class UI {
   }
 
   get blocking() { return !!this.modal; }
+
+  // Re-apply translated labels on static HTML (after a language change).
+  refreshLabels() {
+    $('#btn-bag').setAttribute('aria-label', t('ui.bag'));
+    $('#btn-notebook').setAttribute('aria-label', t('ui.notebook'));
+    $('#btn-pause').setAttribute('aria-label', t('ui.pause'));
+    $('#btn-mute').setAttribute('aria-label', t('ui.mute'));
+    $('#touch-action').setAttribute('aria-label', t('ui.action'));
+    this._hotSig = ''; this._prompt = undefined;
+  }
 
   init(game) {
     this.game = game;
@@ -607,6 +620,19 @@ export class UI {
     this.open('notebook', this.panel(t('notebook.title'), body, null, { tabs }));
   }
 
+  // ------------------------------------------------------------ achievements & stats
+  openAchievements() {
+    const un = Progress.unlocked, st = Progress.stats;
+    const got = ACHIEVEMENTS.filter((a) => un[a.id]).length;
+    const list = ACHIEVEMENTS.map((a) => h('div', { class: `item-row ach${un[a.id] ? ' got' : ''}` },
+      h('span', { class: 'ach-icon', text: un[a.id] ? '★' : '☆' }),
+      h('div', { class: 'grow' }, h('div', { class: 'name', text: t(`achievement.${a.id}.name`) }), h('div', { class: 'desc', text: t(`achievement.${a.id}.desc`) }))));
+    const stats = ['games', 'wins', 'losses', 'days', 'harvested', 'earned', 'clues', 'quests', 'pets'].map((k) =>
+      h('div', { class: 'summary-line' }, h('span', { text: t(`stats.${k}`) }), h('b', { text: String(st[k] || 0) })));
+    const body = [h('p', { class: 'help', text: t('achievement.count', { n: got, total: ACHIEVEMENTS.length }) }), h('div', { class: 'cols' }, h('div', {}, list), h('div', {}, h('h3', { text: t('stats.title') }), stats))];
+    this.open('achievements', this.panel(t('achievement.title'), body));
+  }
+
   // ------------------------------------------------------------ pause / help
   openPause(game) {
     const soundBtn = h('button', { class: 'btn', onclick: () => { this.toggleMute(); soundBtn.textContent = t(Audio.muted ? 'ui.soundOff' : 'ui.soundOn'); } }, t(Audio.muted ? 'ui.soundOff' : 'ui.soundOn'));
@@ -620,6 +646,7 @@ export class UI {
       soundBtn,
       musicBtn,
       h('button', { class: 'btn', onclick: () => this.openNotebook(game, 'help') }, t('ui.controls')),
+      h('button', { class: 'btn', onclick: () => this.openAchievements() }, t('achievement.title')),
       h('button', { class: 'btn', onclick: () => this.confirm(t('ui.quitConfirm'), t('ui.quit'), t('ui.cancel'), () => this.onQuit && this.onQuit(), { danger: true }) }, t('ui.quit')));
     this.open('pause', this.panel(t('ui.paused'), body));
   }
@@ -708,7 +735,13 @@ export class UI {
   }
 
   // ------------------------------------------------------------ title
-  showTitle(saveInfo, { onPlay, onNew, difficulty, onDifficulty }) {
+  showTitle(saveInfo, { onPlay, onNew, difficulty, onDifficulty, onLanguage }) {
+    const extra = $('#title-extra');
+    extra.innerHTML = '';
+    extra.append(h('button', { class: 'btn small', onclick: () => this.openAchievements() }, `★ ${t('achievement.title')}`));
+    for (const lang of SUPPORTED) {
+      extra.append(h('button', { class: `btn small${lang === currentLang() ? ' sel' : ''}`, onclick: () => onLanguage(lang) }, t(`lang.${lang}`)));
+    }
     const row = $('#title-diff');
     row.innerHTML = '';
     row.append(h('span', { text: t('difficulty.label') }));

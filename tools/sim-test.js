@@ -22,7 +22,7 @@ function makeGame() {
     openBin() {}, openCraft() {}, openBoard() {}, openShop() {}, openAccuse() {}, openNotebook() {}, openBag() {}, openPause() {},
   };
   const renderer = { snap() {}, updateCamera() {} };
-  const input = { consume: () => [], move: { x: 0, y: 0 }, clearHeld() {} };
+  const input = { consume: () => [], poll() {}, move: { x: 0, y: 0 }, clearHeld() {} };
   return { game: new Game({ renderer, ui, input }), ui };
 }
 
@@ -272,6 +272,29 @@ assert.ok(results.minEvidenceBeforeLoss >= 4, 'a diligent player always has at l
   const { game: hard } = makeGame(); hard.newGame('hard');
   assert.equal(hard.mystery.nextAttack, 2); hard.day = 2; assert.equal(hard.omenTonight, false);
   console.log('regrow, requests, difficulty: ok');
+}
+
+// 12) Every translation has the same keys and {placeholders} as English
+{
+  const en = (await import('../strings/en.js')).default;
+  const { SUPPORTED } = await import('../js/i18n.js');
+  const ph = (v) => (String(v).match(/\{\w+\}/g) || []).sort().join();
+  for (const lang of SUPPORTED.filter((l) => l !== 'en')) {
+    const tr = (await import(`../strings/${lang}.js`)).default;
+    const walk = (a, b, path) => {
+      if (typeof a === 'string') {
+        assert.equal(typeof b, 'string', `${lang}: ${path} missing`);
+        assert.equal(ph(b), ph(a), `${lang}: placeholders differ at ${path}`);
+        return;
+      }
+      for (const k of Object.keys(a)) {
+        assert.ok(b && b[k] !== undefined, `${lang}: ${path}.${k} missing`);
+        walk(a[k], b[k], `${path}.${k}`);
+      }
+    };
+    walk(en, tr, lang);
+  }
+  console.log('translations complete: ok');
 }
 
 console.log(`\nAll checks passed across ${results.games} simulated seasons.`);

@@ -1,7 +1,8 @@
 // Tiny i18n layer. All player-facing text is looked up here by dotted key.
 import en from '../strings/en.js';
 
-const SUPPORTED = ['en']; // add 'it' etc. here when strings/<lang>.js exists
+export const SUPPORTED = ['en', 'it']; // add a language here when strings/<lang>.js exists
+let current = 'en';
 let dict = en;
 
 export async function loadLocale(locale) {
@@ -10,8 +11,12 @@ export async function loadLocale(locale) {
   if (lang !== 'en' && SUPPORTED.includes(lang)) {
     try { dict = (await import(`../strings/${lang}.js`)).default; } catch { dict = en; }
   }
-  return SUPPORTED.includes(lang) ? lang : 'en';
+  current = SUPPORTED.includes(lang) && dict !== en ? lang : 'en';
+  if (typeof document !== 'undefined') document.documentElement.lang = current;
+  return current;
 }
+
+export function currentLang() { return current; }
 
 function lookup(obj, key) {
   let o = obj;
