@@ -1,0 +1,12 @@
+{
+  "name": "grim-acres",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Grim Acres - cozy farming sim + comedic gnome mystery (HTML5, no build step).",
+  "scripts": {
+    "start": "npx serve .",
+    "zip": "sh tools/zip.sh",
+    "test": "node tools/sim-test.js"
+  }
+}
