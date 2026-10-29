@@ -428,6 +428,7 @@ export class UI {
       h('button', { class: 'tab', 'data-tab': 'buy', onclick: () => { tab = 'buy'; render(); } }, t('shop.buyTab')),
       h('button', { class: 'tab', 'data-tab': 'sell', onclick: () => { tab = 'sell'; render(); } }, t('shop.sellTab')));
     render();
+    game.tut('shop');
     this.open('shop', this.panel(t('shop.title'), body, null, { tabs, headExtra: money }));
   }
 
@@ -510,6 +511,7 @@ export class UI {
         this.confirm(t('accuse.confirm', { name: t(`npc.${v.id}.name`) }), t('accuse.choose', { name: t(`npc.${v.id}.short`) }), t('ui.cancel'), () => game.accuse(v.id), { danger: true });
       } }, h('img', { src: Art.portraits[v.id], alt: '' }), h('div', {}, h('div', { class: 'name', text: t(`npc.${v.id}.name`) }), h('div', { class: 'title', text: t(`npc.${v.id}.title`) }))));
     }
+    game.tut('lectern');
     this.open('accuse', this.panel(t('accuse.title'), [h('p', { class: 'help', text: t('accuse.help') }), list]));
   }
 
@@ -556,9 +558,10 @@ export class UI {
               v.candidate ? h('div', { class: 'meta' }, t('notebook.tally', { n: tally[v.id].against }), tally[v.id].alibi ? h('span', { class: 'tag green', text: t('notebook.hasAlibi') }) : null) : null,
               h('div', {},
                 n.gnomed ? h('span', { class: 'tag red', text: t('notebook.gnomed') }) : null,
+                n.gnomed && v.candidate ? h('span', { class: 'tag green', text: t('notebook.victimInnocent') }) : null,
                 m.protect[v.id] > 0 ? h('span', { class: 'tag gold', text: t('notebook.protected', { n: m.protect[v.id] }) }) : null,
                 !v.candidate ? h('span', { class: 'tag green', text: t('notebook.candidateNo') }) : null),
-              v.candidate && !m.solved ? h('button', { class: 'btn small', style: 'margin-top:0.3rem', onclick: () => {
+              v.candidate && !m.solved && !n.gnomed ? h('button', { class: 'btn small', style: 'margin-top:0.3rem', onclick: () => {
                 const next = { none: 'sus', sus: 'clear', clear: 'none' }[mark];
                 if (next === 'none') delete m.notes[v.id]; else m.notes[v.id] = next;
                 Audio.play('click'); render();
@@ -569,12 +572,15 @@ export class UI {
         // case board: who the evidence points at
         const tally = this._caseTally(game);
         const max = Math.max(1, ...Object.values(tally).map((x) => x.against));
-        body.append(h('div', { class: 'caseboard' }, Object.entries(tally).map(([id, x]) => h('div', { class: `case-row${x.alibi ? ' cleared' : ''}` },
-          h('img', { src: game.npcs.get(id).gnomed ? Art.gnomes[id].toDataURL() : Art.portraits[id], alt: '' }),
-          h('span', { class: 'case-name', text: t(`npc.${id}.short`) }),
-          h('span', { class: 'case-bar' }, h('span', { style: `width:${(x.against / max) * 100}%` })),
-          h('span', { class: 'case-n', text: t('notebook.tallyShort', { n: x.against }) }),
-          x.alibi ? h('span', { class: 'tag green', text: t('notebook.hasAlibi') }) : null))));
+        body.append(h('div', { class: 'caseboard' }, Object.entries(tally).map(([id, x]) => {
+          const gnomed = game.npcs.get(id).gnomed;
+          return h('div', { class: `case-row${x.alibi || gnomed ? ' cleared' : ''}` },
+            h('img', { src: gnomed ? Art.gnomes[id].toDataURL() : Art.portraits[id], alt: '' }),
+            h('span', { class: 'case-name', text: t(`npc.${id}.short`) }),
+            h('span', { class: 'case-bar' }, h('span', { style: `width:${gnomed ? 0 : (x.against / max) * 100}%` })),
+            h('span', { class: 'case-n', text: t('notebook.tallyShort', { n: x.against }) }),
+            gnomed ? h('span', { class: 'tag green', text: t('notebook.victimInnocent') }) : x.alibi ? h('span', { class: 'tag green', text: t('notebook.hasAlibi') }) : null);
+        })));
         body.append(h('p', { class: 'help', text: t('notebook.caseHelp') }));
         const subjects = ['all', ...VILLAGERS.filter((v) => v.candidate).map((v) => v.id), 'general'];
         body.append(h('div', { class: 'filters' }, subjects.map((s) => h('button', { class: `btn small${filter === s ? ' sel' : ''}`, onclick: () => { filter = s; render(); } },
@@ -591,7 +597,7 @@ export class UI {
           const tag = !c.subject ? null : c.role === 'alibi'
             ? h('span', { class: 'tag green', text: t('notebook.clears', { name: t(`npc.${c.subject}.short`) }) })
             : h('span', { class: 'tag red', text: t('notebook.pointsTo', { name: t(`npc.${c.subject}.short`) }) });
-          const explained = c.subject && c.role !== 'alibi' && tally[c.subject] && tally[c.subject].alibi;
+          const explained = c.subject && c.role !== 'alibi' && tally[c.subject] && (tally[c.subject].alibi || game.npcs.get(c.subject).gnomed);
           body.append(h('div', { class: `clue${explained ? ' explained' : ''}${c.role === 'alibi' ? ' alibi' : ''}` }, h('div', { class: 'ct', text: t(`clue.${f.id}.title`) }), h('div', { class: 'cx', text: t(`clue.${f.id}.text`) }),
             h('div', { class: 'cm' }, tag, ' ', explained ? h('span', { class: 'tag', text: t('notebook.explained') }) : null, ' ', t('notebook.foundDay', { day: f.day }))));
         }
@@ -668,6 +674,7 @@ export class UI {
         h('div', { class: 'headline', text: headline }),
         h('div', { text: a.blocked ? t('morning.newsFoiled', { victim, place: t(`place.${a.place}`) }) : t('morning.newsGnomed', { victim }) })));
     }
+    if (a && game.mystery.attacks.length === 1 && !game.flags.tutSkip2) body.append(h('p', { class: 'news good', text: t('morning.caseOpen') }));
     if (r.scared) body.append(h('p', { class: 'news good', text: t('morning.scared') }));
     if (r.quest) body.append(h('div', { class: 'news good' }, t('quest.new', { name: t(`npc.${r.quest.npc}.name`), qty: r.quest.qty, item: itemName(r.quest.item) })));
     for (const q of r.expired || []) body.append(h('p', { class: 'help', text: t('quest.expired', { name: t(`npc.${q.npc}.short`) }) }));
@@ -699,12 +706,13 @@ export class UI {
     const step = game.tutStep();
     let card = $('#tutorial');
     if (!step || !game.flags.introDone || game.mode !== 'play') { if (card) card.remove(); return; }
-    const key = `${step.id}|${game.flags.tutDone.length}`;
+    const pr = game.tutProgress();
+    const key = `${step.id}|${pr.n}|${pr.phase}`;
     if (card && card.dataset.key === key) return;
     if (card) card.remove();
-    card = h('div', { id: 'tutorial', class: 'tutorial', 'data-key': key },
-      h('div', { class: 'tut-head' }, h('b', { text: t('tutorial.title', { n: game.flags.tutDone.length + 1, total: game.tutTotal }) }),
-        h('button', { class: 'x-btn', 'aria-label': t('tutorial.skip'), title: t('tutorial.skip'), onclick: () => { game.flags.tutSkip = true; this.updateTutorial(game); } }, '✕')),
+    card = h('div', { id: 'tutorial', class: `tutorial ${pr.phase}`, 'data-key': key },
+      h('div', { class: 'tut-head' }, h('b', { text: t(`tutorial.title_${pr.phase}`, { n: pr.n, total: pr.total }) }),
+        h('button', { class: 'x-btn', 'aria-label': t('tutorial.skip'), title: t('tutorial.skip'), onclick: () => { game.skipTutorial(); this.updateTutorial(game); } }, '✕')),
       h('div', { text: t(`tutorial.${step.id}`) }));
     $('#hud-left').append(card);
   }

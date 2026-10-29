@@ -174,6 +174,9 @@ export class Renderer {
       }
     }
 
+    // ---- objective arrow (tutorial)
+    if (game.mode === 'play') this._objectiveArrow(g, game.tutTarget(), cx, cy);
+
     // ---- emotes
     for (const e of game.emotes) {
       const a = Math.min(1, e.t * 2);
@@ -264,6 +267,32 @@ export class Renderer {
     } else if (kind === 'sad') {
       g.fillStyle = '#6f8fbf'; g.fillRect(x + 3, y + 1, 2, 4); g.fillRect(x + 2, y + 3, 4, 2);
     }
+  }
+
+  // Bouncing arrow over the objective, or a pointer at the screen edge when it's off screen.
+  _objectiveArrow(g, tile, cx, cy) {
+    if (!tile) return;
+    const tx = tile.x * TILE + 8, ty = tile.y * TILE - 4;
+    const bob = Math.round(Math.sin(this.time * 5) * 2);
+    const onScreen = tx > cx + 8 && tx < cx + this.vw - 8 && ty > cy + 14 && ty < cy + this.vh - 8;
+    if (onScreen) {
+      const x = tx - 4, y = ty - 14 + bob;
+      g.fillStyle = '#2b2125'; g.fillRect(x - 1, y - 1, 10, 11);
+      g.fillStyle = PAL.yellow;
+      g.fillRect(x + 2, y, 4, 5); g.fillRect(x, y + 5, 8, 1); g.fillRect(x + 1, y + 6, 6, 1); g.fillRect(x + 2, y + 7, 4, 1); g.fillRect(x + 3, y + 8, 2, 1);
+      return;
+    }
+    // edge pointer: a small triangle on the border toward the target
+    const mx = cx + this.vw / 2, my = cy + this.vh / 2;
+    const ang = Math.atan2(ty - my, tx - mx);
+    const r = Math.min(this.vw, this.vh) / 2 - 14;
+    const px = Math.round(mx + Math.cos(ang) * Math.min(r * 1.6, this.vw / 2 - 12));
+    const py = Math.round(my + Math.sin(ang) * Math.min(r, this.vh / 2 - 14));
+    g.save();
+    g.translate(px, py); g.rotate(ang);
+    g.fillStyle = '#2b2125'; g.beginPath(); g.moveTo(9, 0); g.lineTo(-6, -7); g.lineTo(-6, 7); g.closePath(); g.fill();
+    g.fillStyle = PAL.yellow; g.beginPath(); g.moveTo(6, 0); g.lineTo(-4, -5); g.lineTo(-4, 5); g.closePath(); g.fill();
+    g.restore();
   }
 
   _bunting(g, x1, x2, y) {

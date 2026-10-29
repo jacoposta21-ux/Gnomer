@@ -68,6 +68,14 @@ export class Mystery {
     return clue.subject !== this.gnomerId; // herrings + alibis belong to innocents
   }
 
+  // Alibis and red herrings about someone who is already a gnome are pointless (a victim can't be
+  // the Gnomer), so they are never handed out.
+  isMoot(clue, game) {
+    if (!clue.subject || clue.role === 'evidence') return false;
+    const n = game.npcs.get(clue.subject);
+    return !!(n && n.gnomed);
+  }
+
   addFound(id, day) {
     if (!CLUES[id] || this.isFound(id)) return false;
     this.found.push({ id, day });
@@ -174,7 +182,7 @@ export class Mystery {
     const evidenceKnown = Object.values(CLUES).filter((c) => this.isActive(c) && c.role === 'evidence' && (this.isFound(c.id) || this.spawned.includes(c.id))).length;
     if (near && !this.spawned.includes(near.id) && (attack.blocked || !nextScene || (this.attacks.length >= 3 && evidenceKnown < 4))) want.push(near.id);
     if (rng.chance(this.diff.herringChance)) {
-      const herrings = Object.values(CLUES).filter((c) => c.role === 'herring' && c.kind === 'scene' && this.isActive(c) && !this.spawned.includes(c.id));
+      const herrings = Object.values(CLUES).filter((c) => c.role === 'herring' && c.kind === 'scene' && this.isActive(c) && !this.isMoot(c, game) && !this.spawned.includes(c.id));
       if (herrings.length) want.push(rng.pick(herrings).id);
     }
     const occupied = this._occupied(game.world);
@@ -208,10 +216,10 @@ export class Mystery {
   }
 
   // ---------- snooping ----------
-  search(key, day) {
+  search(key, day, game) {
     if (this.attacks.length < 1) return null; // nothing incriminating until the story starts
     const id = this.snoop[key];
-    if (!id || this.isFound(id)) return null;
+    if (!id || this.isFound(id) || (game && this.isMoot(CLUES[id], game))) return null;
     this.addFound(id, day);
     return CLUES[id];
   }
@@ -231,7 +239,7 @@ export class Mystery {
     if (this.solved) return null;
     let lockedClue = null;
     for (const c of Object.values(CLUES)) {
-      if (c.kind !== 'dialogue' || !this.isActive(c) || this.isFound(c.id)) continue;
+      if (c.kind !== 'dialogue' || !this.isActive(c) || this.isFound(c.id) || this.isMoot(c, game)) continue;
       if (this.attacks.length < (c.afterAttack || 0)) continue;
       if (this.witnessFor(c, game) !== villagerId) continue;
       if (game.npcs.get(villagerId).hearts < Math.max(0, (c.minHearts || 0) + this.diff.heartsAdd)) { lockedClue = lockedClue || c; continue; }

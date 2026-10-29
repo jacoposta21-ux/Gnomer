@@ -212,13 +212,56 @@ export class Game {
   // ------------------------------------------------------------ tutorial
   tut(event) {
     const f = this.flags;
-    if (!f || f.tutSkip || f.tutDone.includes(event) || !TUTORIAL.some((s) => s.id === event)) return;
+    if (!f || f.tutDone.includes(event)) return;
+    const phase = this.tutPhase();
+    if (!phase || !TUTORIAL[phase].some((s) => s.id === event)) return;
     f.tutDone.push(event);
     Audio.play('pickup');
-    if (!this.tutStep()) this.ui.toast(t('tutorial.done'), 'clue');
+    if (!this.tutStep()) this.ui.toast(t(phase === 'farm' ? 'tutorial.done' : 'tutorial.doneDetective'), 'clue');
   }
-  tutStep() { return this.flags.tutSkip ? null : TUTORIAL.find((s) => !this.flags.tutDone.includes(s.id)) || null; }
-  get tutTotal() { return TUTORIAL.length; }
+
+  // Which objective list is active: the detective one takes over once the mystery has started.
+  tutPhase() {
+    const f = this.flags, done = (list) => list.every((s) => f.tutDone.includes(s.id));
+    if (this.mystery.attacks.length && !this.mystery.solved && !f.tutSkip2 && !done(TUTORIAL.detective)) return 'detective';
+    if (!f.tutSkip && !done(TUTORIAL.farm)) return 'farm';
+    return null;
+  }
+  tutStep() { const p = this.tutPhase(); return p ? TUTORIAL[p].find((s) => !this.flags.tutDone.includes(s.id)) : null; }
+  tutProgress() {
+    const p = this.tutPhase();
+    if (!p) return null;
+    const list = TUTORIAL[p];
+    return { phase: p, n: list.filter((s) => this.flags.tutDone.includes(s.id)).length + 1, total: list.length };
+  }
+  skipTutorial() { if (this.tutPhase() === 'detective') this.flags.tutSkip2 = true; else this.flags.tutSkip = true; }
+
+  // World tile the objective arrow points at (routing through doors when the goal is in another room).
+  tutTarget() {
+    const step = this.tutStep();
+    if (!step || !step.target) return null;
+    const tg = step.target, W = this.world, here = this.playerArea();
+    let tile = null, area = W.areaById.outdoor;
+    if (tg.mat) { if (here.id !== tg.mat) return null; return { x: here.mat.x, y: here.mat.y }; }
+    if (tg.field) tile = { x: W.field.x + (W.field.w >> 1), y: W.field.y + (W.field.h >> 1) };
+    if (tg.place) tile = { x: tg.place[0], y: tg.place[1] };
+    if (tg.sparkle) {
+      const p = this.player;
+      const sp = [...this.mystery.sparkles].sort((a, b) => Math.hypot(a.x - p.tx, a.y - p.ty) - Math.hypot(b.x - p.tx, b.y - p.ty))[0];
+      if (!sp) return null;
+      tile = { x: sp.x, y: sp.y };
+    }
+    if (tg.obj) {
+      const o = W.objects.find((ob) => ob.kind === tg.obj && !ob.removed);
+      if (!o) return null;
+      tile = { x: o.x, y: o.y };
+      if (o.area) area = W.areaById[o.area];
+    }
+    if (!tile) return null;
+    if (area === here) return tile;
+    if (!here.outdoor) return { x: here.mat.x, y: here.mat.y }; // first, get out of this room
+    return area.door ? { x: area.door.x, y: area.door.y } : tile;
+  }
 
   // The coming night is an attack night (villagers can feel it).
   get omenTonight() { return this.mystery.diff.omen && !this.mystery.solved && !this.mystery.outcome && this.day === this.mystery.nextAttack; }
@@ -562,6 +605,7 @@ export class Game {
 
   askAbout(npc) {
     const m = this.mystery;
+    if (m.attacks.length) this.tut('ask');
     let text;
     if (!m.attacks.length) text = t('talk.noNews');
     else {
@@ -585,6 +629,7 @@ export class Game {
       const had = this.mystery.protect[npc.id] || 0;
       this.inv.remove(id, 1);
       this.mystery.protect[npc.id] = had + item.charges;
+      this.tut('charm');
       this.addFriendship(npc, FRIENDSHIP.charm);
       Audio.play('charm');
       this.emote(npc, 'heart');
@@ -626,6 +671,7 @@ export class Game {
   }
 
   inspect(sparkle) {
+    this.tut('inspect');
     const clue = this.mystery.inspect(sparkle, this.day);
     this._clueToast(clue.id);
     this.ui.say(null, `${t(`clue.${clue.id}.title`)}\n${t(`clue.${clue.id}.text`)}`);
@@ -642,7 +688,7 @@ export class Game {
       this.ui.dialogue([{ who: owner.id, text: t(`npc.${owner.id}.caught`) }, { who: null, text: t('search.caught', { name: t(`npc.${owner.id}.short`) }) }]);
       return;
     }
-    const clue = this.mystery.search(obj.key, this.day);
+    const clue = this.mystery.search(obj.key, this.day, this);
     if (clue) {
       this.stats.snooped = (this.stats.snooped || 0) + 1;
       this._clueToast(clue.id);
@@ -704,6 +750,7 @@ export class Game {
   shipSlot(i) {
     const s = this.inv.slots[i];
     if (!s || !this.sellValue(s.id)) return;
+    this.tut('ship');
     const taken = this.inv.removeAt(i, s.qty);
     const existing = this.bin.find((b) => b.id === taken.id);
     if (existing) existing.qty += taken.qty; else this.bin.push({ ...taken });
@@ -726,6 +773,7 @@ export class Game {
     const left = this.inv.add(r.out, r.qty);
     if (left) { for (const [id, n] of Object.entries(r.need)) this.inv.add(id, n); this.ui.toast(t('msg.invFull'), 'warn'); return false; }
     Audio.play('charm');
+    this.tut('craft');
     this.ui.toast(t('msg.crafted', { item: t(`item.${r.out}.name`) }));
     return true;
   }

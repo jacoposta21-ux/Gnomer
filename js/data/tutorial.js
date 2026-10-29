@@ -1,6 +1,31 @@
-// First-day objectives, in order. Each is completed by the matching game event
-// (they can be done in any order; the card shows the first unfinished one).
-export const TUTORIAL = [
-  { id: 'exit' }, { id: 'clear' }, { id: 'till' }, { id: 'plant' }, { id: 'water' },
-  { id: 'talk' }, { id: 'notebook' }, { id: 'sleep' },
-];
+// Guided objectives, in two phases. Each step is completed by the matching game event
+// (steps can be done in any order; the card shows the first unfinished one).
+// target: where the on-screen arrow points.
+//   mat: 'farmhouse'        -> the doormat of that room (only while inside it)
+//   field: true             -> the middle of the farm field
+//   obj: kind               -> the first object of that kind (indoors: via the building door)
+//   place: [x, y]           -> an outdoor tile
+//   sparkle: true           -> the nearest clue sparkle
+export const TUTORIAL = {
+  // Day one: the farm loop.
+  farm: [
+    { id: 'exit', target: { mat: 'farmhouse' } },
+    { id: 'clear', target: { field: true } },
+    { id: 'till', target: { field: true } },
+    { id: 'plant', target: { field: true } },
+    { id: 'water', target: { field: true } },
+    { id: 'ship', target: { obj: 'bin' } },
+    { id: 'talk', target: { place: [48, 22] } },
+    { id: 'shop', target: { obj: 'counter' } },
+    { id: 'notebook' },
+    { id: 'sleep', target: { obj: 'bed' } },
+  ],
+  // After the first gnoming: how to investigate and catch the Gnomer.
+  detective: [
+    { id: 'inspect', target: { sparkle: true } },
+    { id: 'ask' },
+    { id: 'lectern', target: { obj: 'lectern' } },
+    { id: 'craft', target: { obj: 'workbench' } },
+    { id: 'charm' },
+  ],
+};

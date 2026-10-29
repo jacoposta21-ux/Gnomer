@@ -60,7 +60,7 @@ function playSeason(seed, { protect = true, accuseAt = null } = {}) {
     // inspect every sparkle
     for (const s of [...m.sparkles]) game.inspect(s);
     // snoop every house (owners are out at noon)
-    for (const o of Object.values(W.searchables)) m.search(o.key, game.day);
+    for (const o of Object.values(W.searchables)) m.search(o.key, game.day, game);
     // charm whoever the Gnomer would pick next, if we can craft one (a good detective's guess)
     if (protect) {
       const r = game.recipes[0];
@@ -272,6 +272,25 @@ assert.ok(results.minEvidenceBeforeLoss >= 4, 'a diligent player always has at l
   const { game: hard } = makeGame(); hard.newGame('hard');
   assert.equal(hard.mystery.nextAttack, 2); hard.day = 2; assert.equal(hard.omenTonight, false);
   console.log('regrow, requests, difficulty: ok');
+}
+
+// 13) No alibis or red herrings about villagers who are already gnomes
+{
+  for (let i = 0; i < 40; i++) {
+    const { game } = makeGame(); game.newGame(); game.rng.s = 9000 + i;
+    const m = game.mystery;
+    const innocent = VILLAGERS.find((v) => v.candidate && v.id !== m.gnomerId).id;
+    game.npcs.get(innocent).gnomed = true;
+    for (let d = 0; d < 12 && !m.outcome; d++) {
+      for (const n of game.npcs.values()) { if (n.gnomed) continue; n.friendship = 500; m.gossipFor(n.id, game) && game.askAbout(n); }
+      for (const s of [...m.sparkles]) m.inspect(s, game.day);
+      for (const o of Object.values(game.world.searchables)) m.search(o.key, game.day, game);
+      game.sleep(false);
+    }
+    const bad = m.found.map((f) => CLUES[f.id]).filter((c) => c.subject === innocent && c.role !== 'evidence');
+    assert.equal(bad.length, 0, `no alibi/herring about gnomed ${innocent}`);
+  }
+  console.log('no clues about gnomed suspects: ok');
 }
 
 // 12) Every translation has the same keys and {placeholders} as English
