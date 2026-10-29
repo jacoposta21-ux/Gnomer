@@ -1,6 +1,6 @@
 // Game state + rules glue: time, interactions, farming actions, villagers, the night cycle, endings.
 // Rendering lives in renderer.js, overlays in ui.js, content in js/data + strings.
-import { World, T } from './world.js';
+import { World, T, TILE } from './world.js';
 import { RNG } from './rng.js';
 import { Player, NPC, Cat, DIRS } from './entities.js';
 import { MAP } from './data/map.js';
@@ -41,6 +41,7 @@ export class Game {
 
   // ------------------------------------------------------------ setup
   _baseState(seed) {
+    this._tutSay = [];
     this.world = new World();
     this.rng = new RNG(seed);
     this.player = new Player();
@@ -222,9 +223,11 @@ export class Game {
     if (!phase || !TUTORIAL[phase].some((s) => s.id === event)) return;
     f.tutDone.push(event);
     Audio.play('pickup');
+    // explanations wait until any open dialogue closes
+    if (TUTORIAL[phase].find((s) => s.id === event).visit) this._tutSay.push(t(`tutorial.arrive.${event}`));
     if (!this.tutStep()) {
       if (phase === 'farm') this.ui.toast(t('tutorial.done'), 'clue');
-      else this._tutWrap = true; // shown once the current dialogue closes
+      else this._tutSay.push(t('tutorial.doneDetective'));
     }
   }
 
@@ -234,6 +237,15 @@ export class Game {
     if (this.mystery.attacks.length && !this.mystery.solved && !f.tutSkip2 && !done(TUTORIAL.detective)) return 'detective';
     if (!f.tutSkip && !done(TUTORIAL.farm)) return 'farm';
     return null;
+  }
+  // "Go and see" steps complete as soon as the player stands near the target.
+  _tutVisit() {
+    const step = this.tutStep();
+    if (!step || !step.visit) return;
+    const W = this.world, o = W.objects.find((ob) => ob.kind === step.target.obj && !ob.removed);
+    if (!o || (o.area ? W.areaById[o.area] : W.areaById.outdoor) !== this.playerArea()) return;
+    const cx = o.x + (o.w || 1) / 2, cy = o.y + (o.h || 1) / 2;
+    if (Math.hypot(this.player.x / TILE - cx, this.player.y / TILE - cy) <= 2.6) this.tut(step.id);
   }
   tutStep() { const p = this.tutPhase(); return p ? TUTORIAL[p].find((s) => !this.flags.tutDone.includes(s.id)) : null; }
   tutProgress() {
@@ -315,7 +327,8 @@ export class Game {
       if (this.fishing) this._fishUpdate(dt);
       actions.length = 0;
     }
-    if (this._tutWrap) { this._tutWrap = false; this.ui.say(null, t('tutorial.doneDetective')); return; }
+    if (this._tutSay.length) { this.ui.say(null, this._tutSay.shift()); return; }
+    this._tutVisit();
     for (const a of actions) this._action(a);
     if (this.ui.blocking || this.mode !== 'play') return; // an action may have opened a menu
 
