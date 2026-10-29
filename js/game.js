@@ -10,6 +10,7 @@ import { pickLine, reactionLine, giftReaction } from './dialogue.js';
 import { ITEMS, BACKPACK, START_INVENTORY, START_MONEY, START_INV_SIZE } from './data/items.js';
 import { CROPS, DEBRIS } from './data/crops.js';
 import { RECIPES } from './data/recipes.js';
+import { TUTORIAL } from './data/tutorial.js';
 import { VILLAGERS, FRIENDSHIP } from './data/villagers.js';
 import { MINUTES_PER_SECOND, DAY_START, DAY_END, SEASON_DAYS, storeOpen, doorLocked } from './time.js';
 import { t, tList, fmt } from './i18n.js';
@@ -44,7 +45,7 @@ export class Game {
     this.mystery = new Mystery();
     this.bin = [];
     this.emotes = [];
-    this.flags = { backpack: false, knownLoves: {}, introDone: false };
+    this.flags = { backpack: false, knownLoves: {}, introDone: false, tutDone: [], tutSkip: false };
     this.stats = { earned: 0, harvested: 0 };
   }
 
@@ -79,6 +80,7 @@ export class Game {
     this.farm.load(d.farm || {});
     this.bin = (d.bin || []).filter(([id]) => ITEMS[id]).map(([id, qty]) => ({ id, qty }));
     this.flags = { ...this.flags, ...(d.flags || {}) };
+    if (!d.flags || !d.flags.tutDone) this.flags.tutSkip = this.day > 1;
     this.stats = { ...this.stats, ...(d.stats || {}) };
     for (const [id, s] of Object.entries(d.npcs || {})) {
       const n = this.npcs.get(id);
@@ -117,6 +119,20 @@ export class Game {
     this.world.addObject({ kind: 'gnome', x: attack.x, y: attack.y, victim: attack.victim, solid: true, interact: 'statue' });
     this.world.recomputeSolid();
   }
+
+  // ------------------------------------------------------------ tutorial
+  tut(event) {
+    const f = this.flags;
+    if (!f || f.tutSkip || f.tutDone.includes(event) || !TUTORIAL.some((s) => s.id === event)) return;
+    f.tutDone.push(event);
+    Audio.play('pickup');
+    if (!this.tutStep()) this.ui.toast(t('tutorial.done'), 'clue');
+  }
+  tutStep() { return this.flags.tutSkip ? null : TUTORIAL.find((s) => !this.flags.tutDone.includes(s.id)) || null; }
+  get tutTotal() { return TUTORIAL.length; }
+
+  // The coming night is an attack night (villagers can feel it).
+  get omenTonight() { return !this.mystery.solved && !this.mystery.outcome && this.day === this.mystery.nextAttack; }
 
   playerArea() { return this.world.areaAt(this.player.tx, this.player.ty) || this.world.areaById.outdoor; }
 
@@ -165,6 +181,7 @@ export class Game {
     for (const e of this.emotes) e.t -= dt;
     if (this.emotes.length) this.emotes = this.emotes.filter((e) => e.t > 0);
     this._bumpT -= dt;
+    if (before < 18 * 60 && this.minutes >= 18 * 60 && this.omenTonight) { this.ui.toast(t('msg.omen'), 'warn'); Audio.play('gnome'); }
     if (before < 24 * 60 && this.minutes >= 24 * 60) this.ui.toast(t('msg.midnight'));
     if (before < 25 * 60 && this.minutes >= 25 * 60) this.ui.toast(t('msg.lateWarning'), 'warn');
     if (this.minutes >= DAY_END) this.sleep(true);
@@ -200,6 +217,7 @@ export class Game {
       p.placeAt(portal.to.x, portal.to.y, 'up');
     } else if (portal.kind === 'exit' && p.dir === 'down') {
       p.placeAt(portal.to.x, portal.to.y, 'down');
+      this.tut('exit');
     } else return;
     Audio.play('door');
     this.renderer.snap(this);
@@ -270,7 +288,7 @@ export class Game {
     const id = cur.id, item = ITEMS[id];
     const farm = this.farm;
     if (id === 'hoe') {
-      if (farm.canTill(f.x, f.y)) { if (this._spend(item.energy)) { farm.till(f.x, f.y); Audio.play('till'); } }
+      if (farm.canTill(f.x, f.y)) { if (this._spend(item.energy)) { farm.till(f.x, f.y); Audio.play('till'); this.tut('till'); } }
       else if (farm.debrisAt(f.x, f.y)) this.ui.toast(t('msg.clearFirst'));
       else if (!farm.isField(f.x, f.y)) this.ui.toast(t('msg.noTillHere'));
       return;
@@ -281,17 +299,17 @@ export class Game {
       if (!plot) return;
       if (plot.w) { this.ui.toast(t('msg.alreadyWatered')); return; }
       if (this.water <= 0) { this.ui.toast(t('msg.canEmpty'), 'warn'); Audio.play('error'); return; }
-      if (this._spend(item.energy)) { farm.water(f.x, f.y); this.water--; Audio.play('water'); }
+      if (this._spend(item.energy)) { farm.water(f.x, f.y); this.water--; Audio.play('water'); this.tut('water'); }
       return;
     }
     if (id === 'scythe') {
       const d = farm.debrisAt(f.x, f.y);
-      if (d) { if (this._spend(DEBRIS[d].energy)) { farm.clearDebris(f.x, f.y); Audio.play('swish'); } }
+      if (d) { if (this._spend(DEBRIS[d].energy)) { farm.clearDebris(f.x, f.y); Audio.play('swish'); this.tut('clear'); } }
       else Audio.play('swish');
       return;
     }
     if (item.type === 'seed') {
-      if (farm.canPlant(f.x, f.y)) { farm.plant(f.x, f.y, item.crop); this.inv.remove(id, 1); Audio.play('plant'); }
+      if (farm.canPlant(f.x, f.y)) { farm.plant(f.x, f.y, item.crop); this.inv.remove(id, 1); Audio.play('plant'); this.tut('plant'); }
       else if (!farm.plot(f.x, f.y) && farm.isField(f.x, f.y)) this.ui.toast(t('msg.needTilled'));
     }
   }
@@ -353,6 +371,7 @@ export class Game {
     npc.paused = true; npc.dir = opposite[p.dir];
     const first = npc.talkDay !== this.day;
     let text = null;
+    this.tut('talk');
     if (first) {
       npc.talkDay = this.day;
       npc.talks++;
@@ -563,6 +582,7 @@ export class Game {
 
   // ------------------------------------------------------------ night
   sleep(passedOut) {
+    this.tut('sleep');
     const report = { day: this.day, shipped: this.bin.map((b) => ({ ...b, value: this.sellValue(b.id) * b.qty })), passedOut, penalty: 0 };
     const income = this.binValue();
     this.money += income; this.stats.earned += income;

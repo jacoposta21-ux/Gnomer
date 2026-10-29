@@ -101,11 +101,42 @@ export class UI {
         continue;
       }
       if (a === 'action' && m.onAction) { m.onAction(); continue; }
-      if (a === 'action') { const f = m.el.querySelector('.btn.focus'); if (f) f.click(); continue; }
+      if (a === 'action') { this._clickFocused(m); continue; }
+      if (a === 'up' || a === 'left') { this._moveFocus(m, -1); continue; }
+      if (a === 'down' || a === 'right') { this._moveFocus(m, 1); continue; }
       if (a === 'pause' && m.closable) { this.close(); continue; }
       if (a === 'notebook' && m.name === 'notebook') { this.close(); continue; }
       if (a === 'bag' && m.name === 'bag') { this.close(); continue; }
       if (a === 'mute') this.toggleMute();
+    }
+  }
+
+  // Keyboard navigation for menus: arrows/WASD move a highlight between buttons, E/Space presses it.
+  _focusables(m) {
+    return [...m.el.querySelectorAll('button:not(:disabled)')].filter((b) => !b.classList.contains('x-btn') && b.offsetParent !== null);
+  }
+
+  _moveFocus(m, dir) {
+    const list = this._focusables(m);
+    if (!list.length) return;
+    const cur = list.findIndex((b) => b.classList.contains('focus'));
+    list.forEach((b) => b.classList.remove('focus'));
+    const next = cur < 0 ? (dir > 0 ? 0 : list.length - 1) : (cur + dir + list.length) % list.length;
+    list[next].classList.add('focus');
+    list[next].scrollIntoView({ block: 'nearest' });
+    Audio.play('click');
+  }
+
+  _clickFocused(m) {
+    const list = this._focusables(m);
+    const idx = list.findIndex((b) => b.classList.contains('focus'));
+    if (idx < 0) return;
+    list[idx].click();
+    // menus re-render after most clicks: keep the highlight on the same position
+    if (this.modal === m && !m.el.querySelector('button.focus')) {
+      const again = this._focusables(m);
+      const el = again[Math.min(idx, again.length - 1)];
+      if (el) el.classList.add('focus');
     }
   }
 
@@ -128,6 +159,10 @@ export class UI {
     $('#hud-day').textContent = `${t('ui.dayLabel', { dow: tList('days')[dayOfWeek(game.day)], day: game.day })} · ${t(`weather.${game.weather}`)}`;
     $('#hud-time').textContent = formatClock(game.minutes);
     $('#hud-money').textContent = t('ui.money', { n: game.money });
+    const omen = $('#hud-omen');
+    const showOmen = game.omenTonight && game.minutes >= 18 * 60;
+    if (omen.dataset.on !== String(showOmen)) { omen.dataset.on = String(showOmen); omen.textContent = showOmen ? t('ui.omen') : ''; }
+    this.updateTutorial(game);
     const pct = Math.max(0, (game.energy / game.maxEnergy) * 100);
     const fill = $('#hud-energy-fill');
     fill.style.width = `${pct}%`;
@@ -431,7 +466,21 @@ export class UI {
   }
 
   // ------------------------------------------------------------ notebook
+  // Per-suspect tally of what the player has found: clues pointing at them, and whether an alibi clears them.
+  _caseTally(game) {
+    const tally = {};
+    for (const v of VILLAGERS) if (v.candidate) tally[v.id] = { against: 0, alibi: false };
+    for (const f of game.mystery.found) {
+      const c = CLUES[f.id];
+      if (!c.subject || !tally[c.subject]) continue;
+      if (c.role === 'alibi') tally[c.subject].alibi = true;
+      else tally[c.subject].against++;
+    }
+    return tally;
+  }
+
   openNotebook(game, tab = 'suspects') {
+    game.tut('notebook');
     const body = h('div');
     let filter = 'all';
     const m = game.mystery;
@@ -441,6 +490,7 @@ export class UI {
       if (tab === 'suspects') {
         body.append(h('p', { class: 'help', text: `${t('notebook.nextHint', { n: game.victimCount, max: MYSTERY.maxVictims })} ${t('notebook.seasonLeft', { day: Math.min(game.day, SEASON_DAYS), total: SEASON_DAYS })}` }));
         const grid = h('div', { class: 'suspects' });
+        const tally = this._caseTally(game);
         for (const v of VILLAGERS) {
           const n = game.npcs.get(v.id);
           const mark = m.notes[v.id] || 'none';
@@ -455,6 +505,7 @@ export class UI {
               h('div', { class: 'bio', text: t(`npc.${v.id}.bio`) }),
               h('div', { class: 'meta' }, `${t('notebook.heightLabel', { n: v.stats.height })} · ${t('notebook.wealthLabel', { w: wealthWords[v.stats.wealth] || '' })}`),
               h('div', { class: 'meta' }, loves.length ? t('notebook.lovesLabel', { items: loves.map(itemName).join(', ') }) : t('notebook.unknownLoves')),
+              v.candidate ? h('div', { class: 'meta' }, t('notebook.tally', { n: tally[v.id].against }), tally[v.id].alibi ? h('span', { class: 'tag green', text: t('notebook.hasAlibi') }) : null) : null,
               h('div', {},
                 n.gnomed ? h('span', { class: 'tag red', text: t('notebook.gnomed') }) : null,
                 m.protect[v.id] > 0 ? h('span', { class: 'tag gold', text: t('notebook.protected', { n: m.protect[v.id] }) }) : null,
@@ -467,8 +518,18 @@ export class UI {
         }
         body.append(grid);
       } else if (tab === 'clues') {
+        // case board: who the evidence points at
+        const tally = this._caseTally(game);
+        const max = Math.max(1, ...Object.values(tally).map((x) => x.against));
+        body.append(h('div', { class: 'caseboard' }, Object.entries(tally).map(([id, x]) => h('div', { class: `case-row${x.alibi ? ' cleared' : ''}` },
+          h('img', { src: game.npcs.get(id).gnomed ? Art.gnomes[id].toDataURL() : Art.portraits[id], alt: '' }),
+          h('span', { class: 'case-name', text: t(`npc.${id}.short`) }),
+          h('span', { class: 'case-bar' }, h('span', { style: `width:${(x.against / max) * 100}%` })),
+          h('span', { class: 'case-n', text: t('notebook.tallyShort', { n: x.against }) }),
+          x.alibi ? h('span', { class: 'tag green', text: t('notebook.hasAlibi') }) : null))));
+        body.append(h('p', { class: 'help', text: t('notebook.caseHelp') }));
         const subjects = ['all', ...VILLAGERS.filter((v) => v.candidate).map((v) => v.id), 'general'];
-        body.append(h('div', { class: 'filters' }, subjects.map((s) => h('button', { class: `btn small${filter === s ? ' focus' : ''}`, onclick: () => { filter = s; render(); } },
+        body.append(h('div', { class: 'filters' }, subjects.map((s) => h('button', { class: `btn small${filter === s ? ' sel' : ''}`, onclick: () => { filter = s; render(); } },
           s === 'all' ? t('notebook.filterAll') : s === 'general' ? t('notebook.general') : t(`npc.${s}.short`)))));
         const found = [...m.found].reverse().filter((f) => {
           const c = CLUES[f.id];
@@ -482,8 +543,9 @@ export class UI {
           const tag = !c.subject ? null : c.role === 'alibi'
             ? h('span', { class: 'tag green', text: t('notebook.clears', { name: t(`npc.${c.subject}.short`) }) })
             : h('span', { class: 'tag red', text: t('notebook.pointsTo', { name: t(`npc.${c.subject}.short`) }) });
-          body.append(h('div', { class: 'clue' }, h('div', { class: 'ct', text: t(`clue.${f.id}.title`) }), h('div', { class: 'cx', text: t(`clue.${f.id}.text`) }),
-            h('div', { class: 'cm' }, tag, ' ', t('notebook.foundDay', { day: f.day }))));
+          const explained = c.subject && c.role !== 'alibi' && tally[c.subject] && tally[c.subject].alibi;
+          body.append(h('div', { class: `clue${explained ? ' explained' : ''}${c.role === 'alibi' ? ' alibi' : ''}` }, h('div', { class: 'ct', text: t(`clue.${f.id}.title`) }), h('div', { class: 'cx', text: t(`clue.${f.id}.text`) }),
+            h('div', { class: 'cm' }, tag, ' ', explained ? h('span', { class: 'tag', text: t('notebook.explained') }) : null, ' ', t('notebook.foundDay', { day: f.day }))));
         }
       } else if (tab === 'victims') {
         body.append(h('p', { class: 'help', text: t('notebook.nextHint', { n: game.victimCount, max: MYSTERY.maxVictims }) }));
@@ -534,6 +596,7 @@ export class UI {
         h('div', { class: 'headline', text: headline }),
         h('div', { text: a.blocked ? t('morning.newsFoiled', { victim, place: t(`place.${a.place}`) }) : t('morning.newsGnomed', { victim }) })));
     }
+    if (game.omenTonight) body.append(h('p', { class: 'news', text: t('morning.omen') }));
     if (game.mystery.attacks.length && !game.mystery.solved) body.append(h('p', { class: 'help', text: t('morning.victimsLeft', { n: game.victimCount, max: MYSTERY.maxVictims }) }));
     body.append(h('h3', { text: t('morning.shipped') }));
     if (!r.shipped.length) body.append(h('p', { class: 'help', text: t('morning.nothingShipped') }));
@@ -550,11 +613,26 @@ export class UI {
     const note = h('div', { class: 'note' },
       h('h3', { text: t('intro.title') }), h('div', { class: 'pre', text: t('intro.body') }),
       h('div', { class: 'tips', text: t('intro.tips') }),
-      h('button', { class: 'btn primary', onclick: () => { game.flags.introDone = true; note.remove(); } }, t('intro.ok')));
+      h('button', { class: 'btn primary', onclick: () => { game.flags.introDone = true; note.remove(); this._note = null; } }, t('intro.ok')));
     $('#hud').append(note);
     this._note = note;
   }
   hideIntro() { if (this._note) { this._note.remove(); this._note = null; } }
+
+  // Small, non-blocking objective card for the first day.
+  updateTutorial(game) {
+    const step = game.tutStep();
+    let card = $('#tutorial');
+    if (!step || !game.flags.introDone || game.mode !== 'play') { if (card) card.remove(); return; }
+    const key = `${step.id}|${game.flags.tutDone.length}`;
+    if (card && card.dataset.key === key) return;
+    if (card) card.remove();
+    card = h('div', { id: 'tutorial', class: 'tutorial', 'data-key': key },
+      h('div', { class: 'tut-head' }, h('b', { text: t('tutorial.title', { n: game.flags.tutDone.length + 1, total: game.tutTotal }) }),
+        h('button', { class: 'x-btn', 'aria-label': t('tutorial.skip'), title: t('tutorial.skip'), onclick: () => { game.flags.tutSkip = true; this.updateTutorial(game); } }, '✕')),
+      h('div', { text: t(`tutorial.${step.id}`) }));
+    $('#hud-left').append(card);
+  }
 
   // ------------------------------------------------------------ endings
   showEnding(type, game, accusedId) {

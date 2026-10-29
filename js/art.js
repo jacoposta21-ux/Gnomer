@@ -155,7 +155,8 @@ function soilTile(wet) {
   R(g, 1, 1, 14, 14, base);
   for (let y = 3; y < 15; y += 4) R(g, 2, y, 12, 1, dark);
   R(g, 1, 1, 14, 1, shade(base, 0.12));
-  if (wet) { P(g, 4, 6, '#5b7d8f'); P(g, 11, 10, '#5b7d8f'); }
+  // wet soil: darker, with a soft glossy sheen along the furrows (no dots: they read as seeds)
+  if (wet) for (let y = 2; y < 15; y += 4) R(g, 3, y, 10, 1, '#5e4a3e');
   return c;
 }
 

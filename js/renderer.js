@@ -149,6 +149,16 @@ export class Renderer {
       else this._char(g, it.ch, it.player ? 'player' : it.ch.id, game);
     }
 
+    // ---- exit arrow over the doormat of the room we're in
+    if (!area.outdoor && area.mat) {
+      const bob = Math.round(Math.sin(this.time * 4) * 1.5);
+      const ax = area.mat.x * TILE + 4, ay = area.mat.y * TILE - 6 + bob;
+      g.fillStyle = 'rgba(20,12,16,0.5)';
+      g.fillRect(ax - 1, ay - 1, 10, 8);
+      g.fillStyle = PAL.litL;
+      g.fillRect(ax + 3, ay, 2, 3); g.fillRect(ax + 1, ay + 3, 6, 1); g.fillRect(ax + 2, ay + 4, 4, 1); g.fillRect(ax + 3, ay + 5, 2, 1);
+    }
+
     // ---- sparkles
     if (area.outdoor) {
       const f = Math.floor(this.time * 6) % 4;

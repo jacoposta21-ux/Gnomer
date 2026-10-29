@@ -29,8 +29,9 @@ img.px, .px img { image-rendering: pixelated; image-rendering: crisp-edges; }
 
 /* ---------- HUD ---------- */
 #hud { position: absolute; inset: 0; pointer-events: none; }
+#hud-left { position: absolute; left: 0.6rem; top: 0.6rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; }
 #hud-card {
-  position: absolute; left: 0.6rem; top: 0.6rem; min-width: 8.5rem;
+  min-width: 8.5rem;
   background: rgba(43, 33, 37, 0.88); border: 2px solid var(--line); border-radius: 6px;
   padding: 0.35rem 0.6rem; line-height: 1.25; box-shadow: 0 2px 0 rgba(0,0,0,0.4);
 }
@@ -218,3 +219,25 @@ body.touch #prompt { bottom: 4.4rem; left: auto; right: 6.2rem; transform: none;
   #title h1 { font-size: 2.4rem; }
   #title-art { width: 8rem; height: 4rem; }
 }
+
+/* ---------- step 1 additions ---------- */
+.slot.focus, .tab.focus, .suspect.focus { outline: 2px solid var(--accent2); outline-offset: 1px; }
+.btn.sel { background: #5a4430; border-color: var(--accent); }
+#hud-omen { color: #e88a7a; font-size: 0.8rem; font-weight: bold; }
+#hud-omen:empty { display: none; }
+.tutorial {
+  width: min(17rem, 44vw); pointer-events: auto;
+  background: rgba(43, 33, 37, 0.92); border: 2px solid var(--accent2); border-radius: 6px; padding: 0.35rem 0.6rem;
+  font-size: 0.8rem; line-height: 1.3; animation: pop 0.2s ease-out;
+}
+.tutorial .tut-head { display: flex; justify-content: space-between; align-items: center; color: var(--accent2); margin-bottom: 0.15rem; }
+.tutorial .x-btn { font-size: 0.9rem; }
+.caseboard { display: grid; gap: 0.25rem; margin-bottom: 0.4rem; }
+.case-row { display: grid; grid-template-columns: 1.8rem 5rem 1fr auto auto; align-items: center; gap: 0.4rem; font-size: 0.85rem; }
+.case-row img { width: 1.8rem; height: 1.8rem; image-rendering: pixelated; border-radius: 4px; }
+.case-row.cleared { opacity: 0.6; }
+.case-bar { height: 0.55rem; background: #1e1619; border-radius: 3px; overflow: hidden; }
+.case-bar span { display: block; height: 100%; background: linear-gradient(90deg, #c2563f, #e2b54a); }
+.case-n { color: var(--muted); font-size: 0.75rem; white-space: nowrap; }
+.clue.explained { opacity: 0.6; border-left-color: #6a5a52; }
+.clue.alibi { border-left-color: var(--good); }
