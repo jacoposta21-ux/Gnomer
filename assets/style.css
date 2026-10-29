@@ -308,3 +308,8 @@ body.touch #prompt { bottom: 4.4rem; left: auto; right: 6.2rem; transform: none;
 #eyes.closed .lid { transform: translateY(0); }
 #eyes .eyes-text { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: var(--cream); font-family: Georgia, serif; font-size: 1.5rem; opacity: 0; transition: opacity 0.4s; white-space: nowrap; }
 #eyes.show-text .eyes-text { opacity: 1; }
+
+.win-banner { text-align: center; font-size: 2rem; font-weight: 800; letter-spacing: 0.05em; color: #f2c14e;
+  text-shadow: 0 2px 0 #7a4a1a, 0 0 18px rgba(242, 193, 78, 0.6); margin: 0.2rem 0 0.6rem; animation: winPop 0.6s ease-out; }
+@keyframes winPop { 0% { transform: scale(0.4); opacity: 0; } 70% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(1); } }
+.btn:disabled { opacity: 0.5; cursor: default; }

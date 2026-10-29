@@ -112,7 +112,7 @@ export default {
     title_detective: "Detektiv {n}/{total}",
     skip: "Diese Ziele überspringen",
     done: "Hof-Grundlagen geschafft! Der gelbe Pfeil führt dich wieder, sobald das Rätsel beginnt.",
-    doneDetective: "Jetzt weißt du, wie man ermittelt! Finde den Gnomer und klag ihn im Rathaus an.",
+    doneDetective: "Jetzt weißt du, wie man ermittelt! Sammle weiter Hinweise und schau ins Notizbuch. Wenn du dir SICHER bist, wer der Gnomer ist (und nur dann!), geh zum Pult im Rathaus (8:00-20:00) und nenne den Namen: Liegst du falsch, wirst du selbst zum Gnom. Bis dahin kannst du an der Werkbank neben dem Haus Amulette basteln (2 Knoblauch + 1 Rübe), um das nächste mögliche Opfer zu schützen.",
     exit: "Geh aus dem Bauernhaus: tritt auf die rote Fußmatte (folge dem gelben Pfeil).",
     clear: "Geh zu deinem Feld. Wähle die Sense (Platz 3) und drück E vor Unkraut, Zweigen oder Dornen.",
     till: "Wähle die Hacke (Platz 1) und drück E auf freiem Boden im Feld.",
@@ -277,6 +277,7 @@ export default {
   },
 
   talk: {
+    congrats: ["Der Held von Mildew Hollow! Du hast {gnomer} entlarvt. Ich kann's immer noch nicht glauben.", "Da ist ja der Bauer, der {gnomer} geschnappt hat! Die Runde geht auf mich. Tee, versteht sich.", "Letzte Nacht hab ich zum ersten Mal seit Wochen ruhig geschlafen. Danke!", "Alle reden über dich! Ausgerechnet {gnomer}… Du hast ein scharfes Auge."],
     ask: "Nach den Vergnomungen fragen",
     giveMenu: "Etwas schenken…",
     whatGift: "Oh? Was hast du denn da?",
@@ -453,7 +454,11 @@ export default {
     win: {
       title: "Fall gelöst!",
       text: "{name} ist der Gnomer! Kaum hast du es ausgesprochen, springt die Glasur aller Zwerge und die Opfer purzeln heraus, staubig, aber glücklich. Mildew Hollow feiert dich mit einer beunruhigenden Menge an Pasteten.",
-      cont: "Weiter gärtnern",
+      cont: "Dieses Spiel fortsetzen",
+      banner: "DU HAST GEWONNEN!",
+      choice: "Der Gnomer hat Mildew Hollow für immer verlassen. Du kannst dieses Spiel weiterspielen (die Dorfbewohner wollen dir danken) oder ein neues mit einem anderen Gnomer beginnen.",
+      newGame: "Neues Spiel (neuer Gnomer)",
+      contToast: "Mildew Hollow ist wieder sicher. Genieß deinen Hof!",
     },
     wrong: {
       title: "Ups.",

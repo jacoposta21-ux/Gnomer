@@ -91,6 +91,7 @@ export class NPC extends Actor {
     this.path = null;
     this.face = 'down'; // facing to use once arrived
     this.gnomed = false;
+    this.gone = false;   // the caught Gnomer leaves the village
     this.friendship = 0;
     this.talkDay = 0;   // last day we chatted (friendship gain once per day)
     this.giftDay = 0;
@@ -99,6 +100,7 @@ export class NPC extends Actor {
     this.paused = false; // held still while in dialogue
   }
 
+  get away() { return this.gnomed || this.gone; }
   get hearts() { return Math.floor(this.friendship / 100); }
   get area() { return this._area; }
 
@@ -134,7 +136,7 @@ export class NPC extends Actor {
   }
 
   update(dt, world, minutes, weather) {
-    if (this.gnomed || this.paused) { this.moving = false; return; }
+    if (this.away || this.paused) { this.moving = false; return; }
     // the hood comes off only once safely back indoors (so a fleeing Gnomer stays anonymous)
     if (this.hooded && !this.prowling && this._area && !this._area.outdoor) { this.hooded = false; this.speed = 44; }
     const want = this.slot(minutes, weather);

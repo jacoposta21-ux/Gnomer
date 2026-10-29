@@ -41,9 +41,9 @@ export class Mystery {
   get diff() { return DIFFICULTY[this.difficulty] || DIFFICULTY.normal; }
   get maxVictims() { return this.diff.maxVictims; }
 
-  newGame(rng, world, difficulty = 'normal') {
+  newGame(rng, world, difficulty = 'normal', exclude = null) {
     this.difficulty = DIFFICULTY[difficulty] ? difficulty : 'normal';
-    const cands = VILLAGERS.filter((v) => v.candidate).map((v) => v.id);
+    const cands = VILLAGERS.filter((v) => v.candidate && v.id !== exclude).map((v) => v.id);
     this.gnomerId = rng.pick(cands);
     const fa = this.diff.firstAttack || MYSTERY.firstAttack;
     this.nextAttack = rng.int(fa[0], fa[1]);

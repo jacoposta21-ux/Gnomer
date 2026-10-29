@@ -56,7 +56,7 @@ export class Game {
     this.stats = { earned: 0, harvested: 0 };
   }
 
-  newGame(difficulty = 'normal') {
+  newGame(difficulty = 'normal', exclude = null) {
     const seed = (Math.random() * 4294967296) >>> 0;
     this._baseState(seed);
     this.day = 1;
@@ -69,7 +69,7 @@ export class Game {
     this.inv = new Inventory(START_INV_SIZE);
     for (const [id, n] of START_INVENTORY) this.inv.add(id, n);
     this.farm.scatterDebris(this.rng);
-    this.mystery.newGame(this.rng, this.world, difficulty);
+    this.mystery.newGame(this.rng, this.world, difficulty, exclude);
     this._wakeUp();
   }
 
@@ -98,6 +98,7 @@ export class Game {
     }
     this.mystery = Mystery.fromJSON(d.mystery);
     for (const a of this.mystery.attacks) if (!a.blocked && !this.mystery.solved) this._gnome(a);
+    if (this.mystery.solved) this.npcs.get(this.mystery.gnomerId).gone = true;
     this._wakeUp();
   }
 
@@ -165,7 +166,7 @@ export class Game {
   _newQuest() {
     if (this.quests.length >= 2 || this.day < 2 || this.mystery.outcome) return null;
     if (!this.rng.chance(0.55)) return null;
-    const free = VILLAGERS.filter((v) => !this.npcs.get(v.id).gnomed && !this.quests.some((q) => q.npc === v.id));
+    const free = VILLAGERS.filter((v) => !this.npcs.get(v.id).away && !this.quests.some((q) => q.npc === v.id));
     if (!free.length) return null;
     const v = this.rng.pick(free);
     const wants = [...v.loves, ...v.likes].filter((id) => ITEMS[id] && ITEMS[id].gift);
@@ -221,7 +222,10 @@ export class Game {
     if (!phase || !TUTORIAL[phase].some((s) => s.id === event)) return;
     f.tutDone.push(event);
     Audio.play('pickup');
-    if (!this.tutStep()) this.ui.toast(t(phase === 'farm' ? 'tutorial.done' : 'tutorial.doneDetective'), 'clue');
+    if (!this.tutStep()) {
+      if (phase === 'farm') this.ui.toast(t('tutorial.done'), 'clue');
+      else this._tutWrap = true; // shown once the current dialogue closes
+    }
   }
 
   // Which objective list is active: the detective one takes over once the mystery has started.
@@ -251,7 +255,7 @@ export class Game {
     if (tg.place) tile = { x: tg.place[0], y: tg.place[1] };
     if (tg.npc) { // nearest villager, preferring ones in the same room
       const p = this.player;
-      const cands = [...this.npcs.values()].filter((n) => !n.gnomed && !n.hooded && n.area);
+      const cands = [...this.npcs.values()].filter((n) => !n.away && !n.hooded && n.area);
       cands.sort((a, b) => ((a.area !== here) - (b.area !== here)) || (Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y)));
       const n = cands[0];
       if (!n) return null;
@@ -311,6 +315,7 @@ export class Game {
       if (this.fishing) this._fishUpdate(dt);
       actions.length = 0;
     }
+    if (this._tutWrap) { this._tutWrap = false; this.ui.say(null, t('tutorial.doneDetective')); return; }
     for (const a of actions) this._action(a);
     if (this.ui.blocking || this.mode !== 'play') return; // an action may have opened a menu
 
@@ -369,7 +374,7 @@ export class Game {
     const area = this.playerArea();
     // idle villagers are solid (Player._move ignores tiles we already overlap, so we can't get trapped)
     for (const n of this.npcs.values()) {
-      if (!n.gnomed && !n.moving && !n.hooded && n.area === area && n.tx === x && n.ty === y) return true;
+      if (!n.away && !n.moving && !n.hooded && n.area === area && n.tx === x && n.ty === y) return true;
     }
     return false;
   }
@@ -406,7 +411,7 @@ export class Game {
     const fx = p.x + dx * 12, fy = p.y + dy * 12;
     let best = null, bestD = 13;
     for (const n of this.npcs.values()) {
-      if (n.gnomed || n.hooded || n.area !== area) continue;
+      if (n.away || n.hooded || n.area !== area) continue;
       const d = Math.hypot(n.x - fx, n.y - fy);
       if (d < bestD) { best = n; bestD = d; }
     }
@@ -535,7 +540,7 @@ export class Game {
   // Villagers chatting among themselves: speech bubbles near the player.
   _banter() {
     const area = this.playerArea(), p = this.player;
-    const near = [...this.npcs.values()].filter((n) => !n.gnomed && !n.moving && !n.paused && !n.hooded && n.area === area && Math.hypot(n.x - p.x, n.y - p.y) < 150);
+    const near = [...this.npcs.values()].filter((n) => !n.away && !n.moving && !n.paused && !n.hooded && n.area === area && Math.hypot(n.x - p.x, n.y - p.y) < 150);
     if (!near.length) return;
     const a = near[Math.floor(Math.random() * near.length)];
     const partner = near.find((n) => n !== a && Math.hypot(n.x - a.x, n.y - a.y) < 90);
@@ -710,6 +715,10 @@ export class Game {
       npc.talks++;
       this.addFriendship(npc, FRIENDSHIP.talk);
       text = reactionLine(npc, this);
+      if (!text && this.flags.wonDay && this.day <= this.flags.wonDay + 2) {
+        text = fmt(this.rng.pick(tList('talk.congrats')), { gnomer: t(`npc.${this.mystery.gnomerId}.name`) });
+        this.emote(npc, 'heart');
+      }
       const last = this.mystery.attacks[this.mystery.attacks.length - 1];
       if (last && last.blocked && last.victim === npc.id && !last.thanked && last.night === this.day - 1) {
         last.thanked = true;
@@ -855,6 +864,9 @@ export class Game {
       for (const o of this.world.objects) if (o.kind === 'gnome') this.world.removeObject(o);
       this.mystery.sparkles = [];
       for (const n of this.npcs.values()) n.snapToSchedule(this.world, this.minutes, this.weather);
+      this.npcs.get(this.mystery.gnomerId).gone = true; // caught: they leave Mildew Hollow for good
+      this.quests = this.quests.filter((q) => q.npc !== this.mystery.gnomerId);
+      this.flags.wonDay = this.day;
       Platform.happytime();
       Audio.play('win');
       this.save();
@@ -963,7 +975,7 @@ export class Game {
     report.weather = this.weather;
     report.expired = [];
     for (const q of this.quests) if (q.due < this.day) { report.expired.push(q); this.addFriendship(this.npcs.get(q.npc), -10); }
-    this.quests = this.quests.filter((q) => q.due >= this.day && !this.npcs.get(q.npc).gnomed);
+    this.quests = this.quests.filter((q) => q.due >= this.day && !this.npcs.get(q.npc).away);
     report.quest = this._newQuest();
     this._wakeUp();
     this.input.clearHeld();

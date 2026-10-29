@@ -140,6 +140,13 @@ assert.ok(results.minEvidenceBeforeLoss >= 4, 'a diligent player always has at l
   const { game, ui } = makeGame(); game.newGame();
   game.accuse(game.mystery.gnomerId);
   assert.equal(game.mystery.outcome, 'win'); assert.deepEqual(ui.endings, ['win']);
+  const caught = game.npcs.get(game.mystery.gnomerId);
+  assert.ok(caught.gone && caught.away, 'the caught Gnomer leaves the village');
+  game.sleep(false);
+  assert.ok(game.npcs.get(game.mystery.gnomerId).gone, 'still gone after a night (and a save/load)');
+  const { game: gl } = makeGame(); gl.loadSave(JSON.parse(JSON.stringify(game.serialize())));
+  assert.ok(gl.npcs.get(gl.mystery.gnomerId).gone, 'gone survives save/load');
+  for (let i = 0; i < 30; i++) { const { game: gn } = makeGame(); gn.newGame('normal', caught.id); assert.notEqual(gn.mystery.gnomerId, caught.id, 'a new game picks a different Gnomer'); }
   const { game: g2, ui: u2 } = makeGame(); g2.newGame();
   const wrong = VILLAGERS.find((v) => v.id !== g2.mystery.gnomerId).id;
   g2.accuse(wrong);

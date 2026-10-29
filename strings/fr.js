@@ -112,7 +112,7 @@ export default {
     title_detective: "Détective {n}/{total}",
     skip: "Passer ces objectifs",
     done: "Bases de la ferme terminées ! La flèche jaune vous guidera de nouveau quand le mystère commencera.",
-    doneDetective: "Vous savez enquêter ! Trouvez le Gnomeur, puis accusez-le à la mairie.",
+    doneDetective: "Vous savez enquêter ! Continuez à réunir des indices et à consulter votre carnet. Quand vous êtes SÛR de savoir qui est le Gnomeur (et seulement alors !), allez au pupitre de la mairie (8:00-20:00) et dites son nom : si vous vous trompez, c'est vous qui finirez en gnome. En attendant, à l'établi près de la maison, vous pouvez fabriquer des talismans (2 ails + 1 navet) pour protéger la prochaine victime probable.",
     exit: "Sortez de la ferme : marchez sur le paillasson rouge (suivez la flèche jaune).",
     clear: "Allez à votre champ. Choisissez la faux (case 3) et appuyez sur E face aux mauvaises herbes, brindilles ou ronces.",
     till: "Choisissez la houe (case 1) et appuyez sur E sur une terre dégagée du champ.",
@@ -277,6 +277,7 @@ export default {
   },
 
   talk: {
+    congrats: ["Le héros de Mildew Hollow ! Vous avez démasqué {gnomer}. Je n'en reviens toujours pas.", "Le voilà ! Celui qui a attrapé {gnomer} ! C'est ma tournée. De thé.", "Cette nuit, j'ai dormi tranquille pour la première fois depuis des semaines. Merci !", "Tout le monde parle de vous ! {gnomer}, qui l'eût cru… Vous avez l'œil."],
     ask: "Poser des questions sur les gnomisations",
     giveMenu: "Offrir un cadeau…",
     whatGift: "Oh ? Qu'est-ce que vous avez là ?",
@@ -453,7 +454,11 @@ export default {
     win: {
       title: "Affaire classée !",
       text: "{name} est le Gnomeur ! À l'instant où vous le dites, l'émail de chaque nain se fissure et les victimes en sortent, poussiéreuses mais ravies. Mildew Hollow organise une fête en votre honneur avec un nombre inquiétant de tourtes.",
-      cont: "Continuer à cultiver",
+      cont: "Continuer cette partie",
+      banner: "VOUS AVEZ GAGNÉ !",
+      choice: "Le Gnomeur a quitté Mildew Hollow pour de bon. Vous pouvez continuer cette partie (les villageois veulent vous remercier) ou en commencer une nouvelle avec un autre Gnomeur.",
+      newGame: "Nouvelle partie (nouveau Gnomeur)",
+      contToast: "Mildew Hollow est de nouveau en sécurité. Profitez de votre ferme !",
     },
     wrong: {
       title: "Oups.",

@@ -112,7 +112,7 @@ export default {
     title_detective: "Detetive {n}/{total}",
     skip: "Pular estes objetivos",
     done: "Básico da fazenda concluído! A seta amarela vai te guiar de novo quando o mistério começar.",
-    doneDetective: "Agora você sabe investigar! Descubra quem é o Gnomador e acuse-o na prefeitura.",
+    doneDetective: "Agora você sabe investigar! Continue juntando pistas e olhando o caderno. Quando tiver CERTEZA de quem é o Gnomador (e só então!), vá ao púlpito da prefeitura (8:00-20:00) e diga o nome: se errar, o gnomo será você. Enquanto isso, na bancada ao lado da casa você pode criar amuletos (2 alhos + 1 nabo) para proteger quem você acha que será o próximo.",
     exit: "Saia da casa: pise no capacho vermelho (siga a seta amarela).",
     clear: "Vá até sua plantação. Escolha a foice (espaço 3) e aperte E diante de mato, gravetos ou espinheiros.",
     till: "Escolha a enxada (espaço 1) e aperte E na terra limpa dentro da plantação.",
@@ -277,6 +277,7 @@ export default {
   },
 
   talk: {
+    congrats: ["O herói de Mildew Hollow! Você desmascarou {gnomer}. Ainda não acredito.", "Olha só! Quem pegou {gnomer}! Eu pago. Bom, o chá.", "Ontem dormi tranquilo pela primeira vez em semanas. Obrigado!", "Todo mundo está falando de você! Logo {gnomer}… Que olho bom você tem."],
     ask: "Perguntar sobre as gnomizações",
     giveMenu: "Dar um presente…",
     whatGift: "Oh? O que você tem aí?",
@@ -453,7 +454,11 @@ export default {
     win: {
       title: "Caso encerrado!",
       text: "{name} é o Gnomador! Assim que você diz isso, o esmalte de todos os anões racha e as vítimas saltam para fora, empoeiradas mas felizes. Mildew Hollow te dá uma festa com uma quantidade alarmante de tortas.",
-      cont: "Continuar plantando",
+      cont: "Continuar esta partida",
+      banner: "VOCÊ VENCEU!",
+      choice: "O Gnomador deixou Mildew Hollow para sempre. Você pode continuar esta partida (os moradores querem te agradecer) ou começar uma nova com outro Gnomador.",
+      newGame: "Nova partida (novo Gnomador)",
+      contToast: "Mildew Hollow está segura de novo. Aproveite sua fazenda!",
     },
     wrong: {
       title: "Ops.",

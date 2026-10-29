@@ -113,7 +113,7 @@ export default {
     title_detective: 'Detective {n}/{total}',
     skip: 'Skip these objectives',
     done: 'Farm basics complete! The yellow arrow will guide you again when the mystery begins.',
-    doneDetective: 'You know how to investigate! Find the Gnomer, then accuse them at the town hall.',
+    doneDetective: "You know how to investigate! Keep gathering clues and checking your notebook. When you are SURE who the Gnomer is (and only then!), go to the Town Hall lectern (8:00-20:00) and name them: get it wrong and you become a gnome. Meanwhile, at the workbench next to your house you can craft charms (2 garlic + 1 turnip) to protect whoever you think is next.",
     exit: 'Walk out of the farmhouse: step onto the red doormat (follow the yellow arrow).',
     clear: 'Go to your field. Select the scythe (slot 3) and press E facing weeds, twigs or brambles.',
     till: 'Select the hoe (slot 1) and press E on clear soil inside the field.',
@@ -278,6 +278,7 @@ export default {
   },
 
   talk: {
+    congrats: ["The hero of Mildew Hollow! You unmasked {gnomer}. I still can't believe it.", "There they are! The farmer who caught {gnomer}! Drinks are on me. Well, tea.", "I slept with both eyes closed last night for the first time in weeks. Thank you!", "Everyone's talking about you! {gnomer}, of all people… You've got a sharp eye."],
     ask: 'Ask about the gnomings',
     giveMenu: 'Give a gift…',
     whatGift: 'Oh? What have you got there?',
@@ -454,7 +455,11 @@ export default {
     win: {
       title: 'Case closed!',
       text: '{name} is the Gnomer! The moment you say it, the glaze on every gnome cracks and the victims pop out, dusty but delighted. Mildew Hollow throws you a party with an alarming number of pies.',
-      cont: 'Keep farming',
+      cont: "Continue this game",
+      banner: "YOU WON!",
+      choice: "The Gnomer has left Mildew Hollow for good. You can keep playing this game (the villagers want to thank you), or start a new game with a different Gnomer.",
+      newGame: "New game (new Gnomer)",
+      contToast: "Mildew Hollow is safe again. Enjoy your farm!",
     },
     wrong: {
       title: 'Oops.',

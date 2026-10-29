@@ -66,6 +66,8 @@ async function boot() {
     });
   };
   ui.onQuit = goTitle;
+  // after catching the Gnomer: a fresh game with a (most likely) different culprit
+  ui.onNewGame = () => { const caught = game.mystery.gnomerId; Save.clear(); game.newGame(Save.settings().difficulty || 'normal', caught); start(true); };
   if (/[?&]debug\b/.test(location.search)) window.__grim = { game, ui, renderer }; // test hook
 
   document.addEventListener('visibilitychange', () => {

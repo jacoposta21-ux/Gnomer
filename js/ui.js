@@ -169,7 +169,7 @@ export class UI {
     for (const b of this.bubbles) {
       if (b.delay > 0) { b.delay -= dt; continue; }
       b.t -= dt;
-      const visible = area && b.npc.area === area && !b.npc.gnomed && !this.modal && b.t > 0;
+      const visible = area && b.npc.area === area && !b.npc.away && !this.modal && b.t > 0;
       if (!b.el && visible) { b.el = h('div', { class: 'bubble', text: b.text }); $('#hud').append(b.el); }
       if (!b.el) continue;
       b.el.style.display = visible ? '' : 'none';
@@ -826,11 +826,22 @@ export class UI {
     const g = game.mystery.gnomerId;
     const profile = h('p', { class: 'help', text: `${t('ending.motive', { text: t(`killer.${g}.motive`) })}\n${t('ending.tell', { text: t(`killer.${g}.tell`) })}`, style: 'white-space:pre-wrap' });
     const stats = h('p', { class: 'help', text: t('ending.stats', { days: game.day, clues: game.mystery.found.length, gold: game.money }) });
-    const foot = type === 'win'
-      ? [h('button', { class: 'btn primary focus', onclick: () => this.close() }, t('ending.win.cont'))]
-      : [h('button', { class: 'btn primary focus', onclick: () => { this.closeModalSilently(); this.onQuit && this.onQuit(); } }, t('ending.title'))];
-    const el = this.panel(t(`ending.${type}.title`), [art, h('p', { class: 'pre', text }), profile, stats], foot, { noX: true });
-    this.open('ending', el, { closable: type === 'win' });
+    const body = [art, h('p', { class: 'pre', text }), profile, stats];
+    let foot;
+    if (type === 'win') {
+      body.unshift(h('div', { class: 'win-banner', text: t('ending.win.banner') }));
+      body.push(h('p', { class: 'help', text: t('ending.win.choice') }));
+      foot = [
+        h('button', { class: 'btn', onclick: () => { this.closeModalSilently(); this.onNewGame && this.onNewGame(); } }, t('ending.win.newGame')),
+        h('button', { class: 'btn primary focus', onclick: () => { this.closeModalSilently(); this.toast(t('ending.win.contToast'), 'clue'); } }, t('ending.win.cont')),
+      ];
+      // ignore the key press that confirmed the accusation, so the victory can't be skipped by accident
+      for (const btn of foot) { btn.disabled = true; setTimeout(() => { btn.disabled = false; }, 1200); }
+    } else {
+      foot = [h('button', { class: 'btn primary focus', onclick: () => { this.closeModalSilently(); this.onQuit && this.onQuit(); } }, t('ending.title'))];
+    }
+    const el = this.panel(t(`ending.${type}.title`), body, foot, { noX: true });
+    this.open('ending', el, { closable: false });
   }
 
   // ------------------------------------------------------------ title

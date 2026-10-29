@@ -106,8 +106,10 @@ B back/pause, X bag, Y notebook, LB/RB hotbar, Start pause.
 - A nameplate appears above doors as you approach them.
 - **Difficulty** (title screen): Easy, Normal or Hard, chosen per new game.
 - **Achievements & statistics** carry over between games (title screen or pause menu).
-- **Accuse** the Gnomer at the lectern in the town hall (8:00-20:00). Get it right and everyone is
-  un-gnomed. Get it wrong and *you* become a gnome. You also lose if four villagers are gnomed or the
+- **Accuse** the Gnomer at the lectern in the town hall (8:00-20:00), only once you're sure. Get it
+  right and everyone is un-gnomed, the Gnomer leaves the village for good and a victory screen lets
+  you start a new game (always with a different Gnomer) or keep playing, with villagers
+  congratulating you for the next couple of days. Get it wrong and *you* become a gnome. You also lose if four villagers are gnomed or the
   28-day season ends first.
 
 ---

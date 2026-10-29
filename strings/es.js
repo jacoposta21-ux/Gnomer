@@ -112,7 +112,7 @@ export default {
     title_detective: "Detective {n}/{total}",
     skip: "Saltar estos objetivos",
     done: "¡Lo básico de la granja, listo! La flecha amarilla te guiará otra vez cuando empiece el misterio.",
-    doneDetective: "¡Ya sabes investigar! Descubre quién es el Gnomador y acúsalo en el ayuntamiento.",
+    doneDetective: "¡Ya sabes investigar! Sigue reuniendo pistas y revisando tu cuaderno. Cuando estés SEGURO de quién es el Gnomador (¡y solo entonces!), ve al atril del ayuntamiento (8:00-20:00) y di su nombre: si te equivocas, el gnomo serás tú. Mientras tanto, en el banco de trabajo junto a tu casa puedes fabricar amuletos (2 ajos + 1 nabo) para proteger a quien creas que será el siguiente.",
     exit: "Sal de la casa: pisa el felpudo rojo (sigue la flecha amarilla).",
     clear: "Ve a tu campo. Elige la hoz (casilla 3) y pulsa E frente a hierbajos, ramitas o zarzas.",
     till: "Elige la azada (casilla 1) y pulsa E sobre tierra despejada dentro del campo.",
@@ -277,6 +277,7 @@ export default {
   },
 
   talk: {
+    congrats: ["¡El héroe de Mildew Hollow! Desenmascaraste a {gnomer}. Todavía no me lo creo.", "¡Ahí está! ¡Quien atrapó a {gnomer}! Invito yo. Bueno, al té.", "Anoche dormí tranquilo por primera vez en semanas. ¡Gracias!", "¡Todo el mundo habla de ti! Nada menos que {gnomer}… Tienes buen ojo."],
     ask: "Preguntar por las gnomizaciones",
     giveMenu: "Hacer un regalo…",
     whatGift: "¿Oh? ¿Qué traes ahí?",
@@ -453,7 +454,11 @@ export default {
     win: {
       title: "¡Caso cerrado!",
       text: "¡{name} es el Gnomador! En cuanto lo dices, el esmalte de todos los gnomos se agrieta y las víctimas salen, polvorientas pero felices. Mildew Hollow te organiza una fiesta con una cantidad alarmante de empanadas.",
-      cont: "Seguir cultivando",
+      cont: "Seguir esta partida",
+      banner: "¡HAS GANADO!",
+      choice: "El Gnomador se ha ido de Mildew Hollow para siempre. Puedes seguir jugando esta partida (los vecinos quieren darte las gracias) o empezar una nueva con otro Gnomador.",
+      newGame: "Nueva partida (nuevo Gnomador)",
+      contToast: "Mildew Hollow vuelve a estar a salvo. ¡Disfruta de tu granja!",
     },
     wrong: {
       title: "Uy.",

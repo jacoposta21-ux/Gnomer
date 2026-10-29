@@ -16,7 +16,6 @@ export const TUTORIAL = {
     { id: 'shop', target: { obj: 'counter' } },
     { id: 'plant', target: { field: true } },
     { id: 'water', target: { field: true } },
-    { id: 'workbench', target: { obj: 'workbench' } },
     { id: 'talk', target: { npc: true } },
     { id: 'notebook' },
     { id: 'rest', target: { obj: 'bench' } },
@@ -25,8 +24,5 @@ export const TUTORIAL = {
   detective: [
     { id: 'inspect', target: { sparkle: true } },
     { id: 'ask', target: { npc: true } },
-    { id: 'lectern', target: { obj: 'lectern' } },
-    { id: 'craft', target: { obj: 'workbench' } },
-    { id: 'charm' },
   ],
 };

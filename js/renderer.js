@@ -149,7 +149,7 @@ export class Renderer {
       list.push({ y: (o.y + o.h) * TILE, o });
     }
     for (const n of game.npcs.values()) {
-      if (n.gnomed || n.area !== area) continue;
+      if (n.away || n.area !== area) continue;
       list.push({ y: n.y, ch: n });
     }
     if (game.mode !== 'title') list.push({ y: game.player.y, ch: game.player, player: true });
