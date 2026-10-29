@@ -175,10 +175,9 @@ export class Game {
     const portal = this.world.portalAt(x, y);
     if (portal && portal.kind === 'door' && doorLocked(portal.lock, this.day, this.minutes)) return true;
     const area = this.playerArea();
-    const p = this.player;
+    // idle villagers are solid (Player._move ignores tiles we already overlap, so we can't get trapped)
     for (const n of this.npcs.values()) {
-      // idle villagers are solid, unless we already overlap them (never trap the player)
-      if (!n.gnomed && !n.moving && n.area === area && n.tx === x && n.ty === y && Math.hypot(n.x - p.x, n.y - p.y) > 12) return true;
+      if (!n.gnomed && !n.moving && n.area === area && n.tx === x && n.ty === y) return true;
     }
     return false;
   }

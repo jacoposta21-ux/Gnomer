@@ -51,8 +51,13 @@ export class Player extends Actor {
     return null;
   }
 
-  _move(dx, dy, blocked) {
+  _move(dx, dy, rawBlocked) {
     if (!dx && !dy) return;
+    // Anything we already overlap never blocks us (e.g. a villager who stopped on top of us),
+    // so the player can always walk out instead of getting stuck.
+    const x0 = Math.floor((this.x - HALF_W) / TILE), x1 = Math.floor((this.x + HALF_W - 0.01) / TILE);
+    const y0 = Math.floor((this.y - BOX_T) / TILE), y1 = Math.floor((this.y + BOX_B - 0.01) / TILE);
+    const blocked = (tx, ty) => !(tx >= x0 && tx <= x1 && ty >= y0 && ty <= y1) && rawBlocked(tx, ty);
     const hit = this._hits(this.x + dx, this.y + dy, blocked);
     if (!hit) { this.x += dx; this.y += dy; return; }
     this.bumped = hit;

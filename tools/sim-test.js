@@ -188,4 +188,19 @@ assert.ok(results.minEvidenceBeforeLoss >= 4, 'a diligent player always has at l
   console.log('pass out: ok');
 }
 
+// 8) Regression: a villager stopping on top of the player must never trap them (bridge bug)
+{
+  const { game } = makeGame(); game.newGame();
+  game.minutes = 17 * 60;
+  const f = game.npcs.get('fennel');
+  f.snapToSchedule(game.world, game.minutes, game.weather);
+  for (const [mx, my] of [[0, 1], [-1, 0], [1, 0]]) {
+    game.player.x = f.x - 12; game.player.y = f.y - 5;
+    const sx = game.player.x, sy = game.player.y;
+    for (let i = 0; i < 60; i++) game.player.update(1 / 60, { x: mx, y: my }, (x, y) => game._blockedForPlayer(x, y));
+    assert.ok(Math.hypot(game.player.x - sx, game.player.y - sy) > 20, `player can walk away (${mx},${my})`);
+  }
+  console.log('never stuck on villagers: ok');
+}
+
 console.log(`\nAll checks passed across ${results.games} simulated seasons.`);
