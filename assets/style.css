@@ -241,3 +241,11 @@ body.touch #prompt { bottom: 4.4rem; left: auto; right: 6.2rem; transform: none;
 .case-n { color: var(--muted); font-size: 0.75rem; white-space: nowrap; }
 .clue.explained { opacity: 0.6; border-left-color: #6a5a52; }
 .clue.alibi { border-left-color: var(--good); }
+
+/* ---------- step 2: villager speech bubbles ---------- */
+.bubble {
+  position: absolute; transform: translate(-50%, -100%); max-width: min(15rem, 40vw); pointer-events: none;
+  background: #f3eee3; color: #2b2125; border: 2px solid #2b2125; border-radius: 8px; padding: 0.2rem 0.5rem;
+  font-size: 0.75rem; line-height: 1.25; text-align: center; animation: pop 0.15s ease-out;
+}
+.bubble::after { content: ''; position: absolute; left: 50%; bottom: -7px; margin-left: -5px; border: 5px solid transparent; border-top-color: #2b2125; border-bottom: none; }

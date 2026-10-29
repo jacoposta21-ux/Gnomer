@@ -47,7 +47,7 @@ export class World {
     const defs = [];
     for (const [id, d] of Object.entries(MAP.interiors)) defs.push({ id, ...d });
     for (const b of MAP.buildings) {
-      if (b.owner) defs.push({ id: b.interior, ...MAP.houseTemplate, wall: MAP.houseWalls[b.owner], owner: b.owner });
+      if (b.owner) defs.push({ id: b.interior, ...MAP.houseTemplate, items: [...MAP.houseTemplate.items, ...(MAP.houseExtras[b.owner] || [])], wall: MAP.houseWalls[b.owner], owner: b.owner });
     }
     let x = 1, y = this.outH + 2, rowH = 0;
     for (const d of defs) {

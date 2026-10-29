@@ -203,4 +203,22 @@ assert.ok(results.minEvidenceBeforeLoss >= 4, 'a diligent player always has at l
   console.log('never stuck on villagers: ok');
 }
 
+// 9) Every searchable piece of furniture can be reached, and every dialogue line has text
+{
+  const { game } = makeGame(); game.newGame();
+  const { findPath } = await import('../js/pathfinding.js');
+  const { has } = await import('../js/i18n.js');
+  const W = game.world;
+  for (const o of Object.values(W.searchables)) {
+    const a = W.areaById[o.area];
+    const ok = [[0, 1], [0, -1], [1, 0], [-1, 0]].some(([dx, dy]) => {
+      const x = o.x + dx, y = o.y + dy;
+      return !W.isSolid(x, y) && findPath(W, a.mat.x, a.mat.y - 1, x, y) !== null;
+    });
+    assert.ok(ok, `${o.key} is reachable`);
+  }
+  for (const v of VILLAGERS) for (const k of Object.keys(v.lines)) assert.ok(has(`npc.${v.id}.lines.${k}`), `text for ${v.id}.${k}`);
+  console.log('furniture reachable + dialogue text: ok');
+}
+
 console.log(`\nAll checks passed across ${results.games} simulated seasons.`);

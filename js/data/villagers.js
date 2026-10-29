@@ -15,6 +15,8 @@ const BASE_LINES = {
   fear1: { state: 'fear' }, fear2: { state: 'fear' },
   h2: { minHearts: 2 },
   h4: { minHearts: 4 },
+  m1: { time: 'morning' }, m2: { time: 'evening' }, m3: { weather: 'cloudy' }, m4: {}, m5: {},
+  m6: { minHearts: 1 }, m7: { minHearts: 3 }, m8: { state: 'fear' }, m9: { state: 'calm' }, m10: { dow: 4 },
 };
 
 export const VILLAGERS = [

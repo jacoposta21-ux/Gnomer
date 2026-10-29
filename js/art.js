@@ -810,6 +810,64 @@ function uiIcon(kind, on = true) {
   return c;
 }
 
+
+// ---------------------------------------------------------------- decorations & personal furniture
+function decorSprites() {
+  const d = {};
+  const box = (w, h) => mk(w, h);
+  { const [c, g] = box(16, 18); R(g, 1, 9, 14, 8, PAL.woodD); R(g, 1, 9, 14, 2, PAL.woodL); R(g, 2, 17, 12, 1, PAL.woodXD);
+    for (const [x, y, col] of [[3, 5, PAL.orange], [7, 3, PAL.purple], [11, 5, PAL.yellow], [5, 7, PAL.red], [10, 7, PAL.purple]]) { R(g, x, y + 1, 1, 3, PAL.leafG); R(g, x - 1, y, 3, 2, col); P(g, x, y, shade(col, 0.3)); }
+    d.planter = c; }
+  { const [c, g] = box(16, 14); R(g, 1, 3, 14, 10, '#d9b45a'); R(g, 1, 3, 14, 2, '#ecc56a'); R(g, 1, 7, 14, 1, '#b8943f'); R(g, 1, 10, 14, 1, '#b8943f'); P(g, 4, 5, '#f2d887'); P(g, 11, 9, '#f2d887'); R(g, 1, 13, 14, 1, '#8a6a2a'); d.haybale = c; }
+  { const [c, g] = box(32, 20);
+    const pk = (x, y, s) => { R(g, x, y + 1, s, s - 2, PAL.pumpkin); R(g, x + 1, y, s - 2, s, PAL.pumpkin); R(g, x + (s >> 1), y, 1, s, PAL.pumpkinD); R(g, x + (s >> 1), y - 2, 2, 2, PAL.leafB); P(g, x + 1, y + 2, '#f7a44a'); };
+    pk(2, 9, 10); pk(13, 10, 9); pk(22, 8, 9); pk(9, 2, 8); d.pumpkinpile = c; }
+  { const [c, g] = box(16, 30); R(g, 7, 10, 2, 20, PAL.trunk); R(g, 1, 13, 14, 2, PAL.trunk);
+    R(g, 4, 12, 8, 9, '#7a5a8e'); R(g, 4, 18, 8, 1, '#5a3a6e'); R(g, 0, 13, 4, 3, '#7a5a8e'); R(g, 12, 13, 4, 3, '#7a5a8e'); P(g, 0, 16, '#d9b45a'); P(g, 15, 16, '#d9b45a');
+    R(g, 5, 5, 6, 7, '#d9b45a'); P(g, 6, 7, PAL.ink); P(g, 9, 7, PAL.ink); R(g, 7, 9, 2, 1, PAL.ink);
+    R(g, 2, 4, 12, 2, '#c9a24a'); R(g, 5, 0, 6, 5, '#c9a24a'); R(g, 5, 3, 6, 1, PAL.red); d.scarecrow = c; }
+  { const [c, g] = box(16, 10); for (let i = 0; i < 26; i++) { const x = 2 + Math.floor(hash2(i, 3, 9) * 12), y = 2 + Math.floor(hash2(3, i, 9) * 6); R(g, x, y, 2, 1, [PAL.leafO, PAL.leafR, PAL.leafY, PAL.leafB][i % 4]); } d.leafpile = c; }
+  // interiors
+  { const [c, g] = box(16, 14); R(g, 2, 6, 12, 7, '#a8844a'); for (let x = 3; x < 14; x += 2) R(g, x, 6, 1, 7, '#8a6a3a');
+    for (const [x, col] of [[3, PAL.purple], [7, '#9a7ab8'], [10, PAL.teal]]) { R(g, x, 3, 4, 4, col); P(g, x + 1, 3, shade(col, 0.3)); } R(g, 12, 1, 1, 6, '#d8d4c8'); d.yarnbasket = c; }
+  { const [c, g] = box(16, 20); R(g, 2, 2, 12, 12, '#7e5a8e'); R(g, 2, 2, 12, 2, '#9878a8'); R(g, 1, 9, 3, 7, '#6a4a7a'); R(g, 12, 9, 3, 7, '#6a4a7a'); R(g, 3, 11, 10, 5, '#8e6a9e'); R(g, 3, 16, 2, 4, PAL.woodXD); R(g, 11, 16, 2, 4, PAL.woodXD); d.armchair = c; }
+  { const [c, g] = box(16, 16); R(g, 3, 10, 10, 5, PAL.woodD); R(g, 1, 8, 14, 3, '#7b766d'); R(g, 5, 3, 6, 5, '#b9a58a'); R(g, 6, 2, 4, 1, '#cbb89c'); R(g, 7, 4, 2, 2, '#8a7a62'); d.potterywheel = c; }
+  { const [c, g] = box(16, 26); R(g, 1, 8, 14, 17, '#a65f48'); R(g, 3, 4, 10, 5, '#a65f48'); R(g, 5, 2, 6, 3, '#a65f48');
+    for (let y = 10; y < 25; y += 3) R(g, 1, y, 14, 1, '#8a4a36'); R(g, 4, 14, 8, 8, '#2a1a1a'); R(g, 5, 17, 6, 5, PAL.orange); R(g, 6, 19, 4, 3, PAL.yellow); d.kiln = c; }
+  { const [c, g] = box(16, 22); R(g, 4, 14, 8, 8, PAL.stoneL); R(g, 3, 13, 10, 2, PAL.stone); R(g, 5, 3, 6, 8, '#b9a58a'); R(g, 4, 10, 8, 3, '#b9a58a'); P(g, 6, 6, '#8a7a62'); P(g, 9, 6, '#8a7a62'); R(g, 7, 8, 2, 1, '#8a7a62'); d.bust = c; }
+  { const [c, g] = box(16, 26); R(g, 1, 2, 14, 24, PAL.woodD); for (const y of [9, 17, 25]) R(g, 2, y, 12, 1, PAL.woodXD);
+    const mini = (x, y, col) => { R(g, x + 1, y, 2, 2, PAL.gnomeHat); P(g, x + 1, y - 1, PAL.gnomeHat); R(g, x, y + 2, 4, 2, PAL.white); R(g, x, y + 4, 4, 2, col); };
+    mini(2, 3, PAL.teal); mini(9, 3, PAL.purple); mini(5, 11, PAL.orange); mini(2, 19, PAL.green); mini(9, 19, PAL.yellow); d.gnomeshelf = c; }
+  { const [c, g] = box(16, 22); R(g, 6, 16, 4, 5, PAL.woodD); R(g, 4, 20, 8, 2, PAL.woodXD); R(g, 3, 3, 10, 11, '#4b6f89'); R(g, 4, 2, 8, 13, '#4b6f89'); R(g, 5, 4, 3, 4, PAL.green); R(g, 9, 8, 3, 4, PAL.green); R(g, 2, 7, 1, 4, PAL.yellow); R(g, 13, 7, 1, 4, PAL.yellow); d.globe = c; }
+  { const [c, g] = box(16, 22); R(g, 7, 12, 2, 10, PAL.woodD); for (let a = 0; a < 8; a++) { const dx = Math.round(Math.cos(a * Math.PI / 4) * 6), dy = Math.round(Math.sin(a * Math.PI / 4) * 6); R(g, 7 + dx, 7 + dy, 2, 2, PAL.woodL); }
+    for (let a = 0; a < 16; a++) P(g, 8 + Math.round(Math.cos(a * Math.PI / 8) * 4), 8 + Math.round(Math.sin(a * Math.PI / 8) * 4), PAL.wood); R(g, 7, 7, 2, 2, PAL.yellow); d.helm = c; }
+  { const [c, g] = box(16, 20); R(g, 7, 3, 2, 14, '#5a565c'); R(g, 5, 1, 6, 3, '#5a565c'); R(g, 6, 2, 4, 1, PAL.stoneD); R(g, 3, 6, 10, 2, '#5a565c'); R(g, 2, 13, 12, 2, '#5a565c'); R(g, 1, 11, 2, 3, '#5a565c'); R(g, 13, 11, 2, 3, '#5a565c'); R(g, 1, 19, 14, 1, PAL.woodXD); d.anchor = c; }
+  { const [c, g] = box(16, 20); R(g, 2, 13, 12, 7, PAL.woodD); R(g, 1, 3, 14, 11, '#9fc1cc'); R(g, 2, 4, 12, 9, '#5f8aa0'); R(g, 2, 4, 12, 1, '#8fb4c6'); R(g, 4, 7, 3, 2, PAL.orange); P(g, 3, 8, PAL.orange); R(g, 9, 9, 3, 2, PAL.yellow); R(g, 11, 10, 1, 3, PAL.green); R(g, 4, 11, 1, 2, PAL.green); d.fishtank = c; }
+  { const [c, g] = box(16, 24); R(g, 1, 6, 14, 18, '#8a4a36'); R(g, 1, 6, 14, 2, '#a65f48'); for (let y = 10; y < 24; y += 4) R(g, 1, y, 14, 1, '#6a3a2a');
+    R(g, 4, 12, 8, 7, '#2a1a1a'); R(g, 5, 15, 6, 3, PAL.orange); R(g, 5, 13, 3, 2, '#d8a25a'); R(g, 9, 13, 2, 2, '#d8a25a'); R(g, 10, 0, 3, 6, '#5a565c'); d.oven = c; }
+  { const [c, g] = box(16, 16); for (const [x, y] of [[1, 6], [8, 6], [4, 1]]) { R(g, x, y, 7, 9, '#e3d4b0'); R(g, x, y, 7, 1, '#c8b78f'); R(g, x + 2, y + 4, 3, 2, '#c8b78f'); } d.floursacks = c; }
+  { const [c, g] = box(16, 24); R(g, 2, 2, 12, 22, '#6e6b64'); R(g, 2, 2, 12, 1, '#8f8a80'); for (const y of [4, 11, 18]) { R(g, 3, y, 10, 6, '#7b766d'); R(g, 6, y + 2, 4, 1, PAL.cream); } d.cabinet = c; }
+  { const [c, g] = box(16, 14); R(g, 1, 10, 14, 4, PAL.woodD); for (const [x, h] of [[2, 6], [6, 9], [10, 4]]) { R(g, x, 10 - h, 4, h, PAL.white); for (let y = 10 - h; y < 10; y += 2) R(g, x, y, 4, 1, '#d8d2c4'); } d.papers = c; }
+  { const [c, g] = box(16, 28); R(g, 4, 2, 1, 25, PAL.woodD); R(g, 2, 26, 6, 2, PAL.woodXD); R(g, 5, 3, 10, 7, PAL.orange); R(g, 5, 6, 10, 1, PAL.yellow); R(g, 9, 4, 2, 1, PAL.white); d.flagstand = c; }
+  return d;
+}
+
+function catSprites(col, dark) {
+  const frames = [0, 1, 2].map((f) => {
+    const [c, g] = mk(14, 12);
+    if (f === 0) { // sitting
+      R(g, 4, 5, 6, 6, col); R(g, 3, 9, 8, 2, col); R(g, 8, 1, 5, 5, col); P(g, 8, 0, col); P(g, 12, 0, col); P(g, 9, 3, PAL.ink); P(g, 11, 3, PAL.ink); R(g, 1, 9, 3, 1, dark); P(g, 1, 8, dark);
+    } else { // walking
+      R(g, 2, 4, 9, 4, col); R(g, 9, 1, 5, 5, col); P(g, 9, 0, col); P(g, 13, 0, col); P(g, 11, 3, PAL.ink); R(g, 0, 3, 2, 1, dark); P(g, 0, 2, dark);
+      const o = f === 1 ? 0 : 1;
+      R(g, 3 + o, 8, 1, 3, dark); R(g, 6 - o, 8, 1, 3, dark); R(g, 8 + o, 8, 1, 3, dark); R(g, 10 - o, 8, 1, 3, dark);
+    }
+    R(g, 3, 5, 2, 1, dark);
+    return c;
+  });
+  return { right: frames, left: frames.map(flip) };
+}
+
 // ---------------------------------------------------------------- registry
 export const Art = {};
 
@@ -836,7 +894,9 @@ export function buildArt() {
     tree: [0, 1, 2, 3].map(tree), bush: bush(), rock: rock(), bin: bin(), workbench: workbench(), well: well(), board: board(),
     fountain: [fountain(0), fountain(1)], stall: stall(), bench: bench(), lamp: lamp(false), lampLit: lamp(true), sign: sign(),
     ...furniture(),
+    ...decorSprites(),
   };
+  Art.cats = { ginger: catSprites('#d9893a', '#a8602a'), grey: catSprites('#8f8a96', '#5f5a66') };
   Art.buildings = {};
   for (const b of MAP.buildings) Art.buildings[b.id] = building(b);
   Art.chars = { player: charSheet(PLAYER_LOOK) };

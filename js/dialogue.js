@@ -8,6 +8,8 @@ function passes(cond, ctx) {
   if (cond.dow !== undefined && cond.dow !== ctx.dow) return false;
   if (cond.state && cond.state !== ctx.state) return false;
   if (cond.minHearts !== undefined && ctx.hearts < cond.minHearts) return false;
+  if (cond.time === 'morning' && ctx.minutes >= 12 * 60) return false;
+  if (cond.time === 'evening' && ctx.minutes < 17 * 60) return false;
   return true;
 }
 
@@ -18,6 +20,7 @@ export function pickLine(npc, game) {
     dow: dayOfWeek(game.day),
     state: game.mystery.attacks.length ? 'fear' : 'calm',
     hearts: npc.hearts,
+    minutes: game.minutes,
   };
   const options = [];
   for (const [key, cond] of Object.entries(npc.def.lines)) {

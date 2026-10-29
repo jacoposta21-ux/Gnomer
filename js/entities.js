@@ -170,3 +170,51 @@ export class NPC extends Actor {
     this._area = world.areaAt(this.tx, this.ty);
   }
 }
+
+// Village cats: wander inside a rectangle, nap, and can be petted.
+export class Cat {
+  constructor(color, rect) {
+    this.color = color;
+    this.rect = rect; // [x, y, w, h] in tiles
+    this.x = 0; this.y = 0;
+    this.dir = 'right';
+    this.moving = false;
+    this.anim = 0;
+    this.wait = 0;
+    this.target = null;
+    this.pettedDay = 0;
+  }
+  get tx() { return Math.floor(this.x / TILE); }
+  get ty() { return Math.floor(this.y / TILE); }
+
+  _randomTile(world) {
+    const [rx, ry, rw, rh] = this.rect;
+    for (let i = 0; i < 20; i++) {
+      const x = rx + Math.floor(Math.random() * rw), y = ry + Math.floor(Math.random() * rh);
+      if (!world.isSolid(x, y) && !world.portalAt(x, y)) return { x, y };
+    }
+    return null;
+  }
+
+  spawn(world) {
+    const t = this._randomTile(world);
+    if (t) { const c = tileCenter(t.x, t.y); this.x = c.x; this.y = c.y; }
+    this.wait = 1 + Math.random() * 3;
+  }
+
+  update(dt, world) {
+    this.anim += dt;
+    if (this.wait > 0) { this.wait -= dt; this.moving = false; return; }
+    if (!this.target) {
+      const t = this._randomTile(world);
+      if (!t) { this.wait = 2; return; }
+      this.target = tileCenter(t.x, t.y);
+    }
+    const dx = this.target.x - this.x, dy = this.target.y - this.y, d = Math.hypot(dx, dy), step = 26 * dt;
+    if (d <= step) { this.target = null; this.wait = 2 + Math.random() * 6; this.moving = false; return; }
+    const nx = this.x + (dx / d) * step, ny = this.y + (dy / d) * step;
+    if (world.isSolid(Math.floor(nx / TILE), Math.floor(ny / TILE))) { this.target = null; this.wait = 1; return; }
+    this.x = nx; this.y = ny; this.moving = true;
+    if (Math.abs(dx) > 0.5) this.dir = dx > 0 ? 'right' : 'left';
+  }
+}

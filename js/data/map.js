@@ -64,6 +64,14 @@ export const MAP = {
     { kind: 'lamp', x: 45, y: 30, light: true },
     { kind: 'lamp', x: 51, y: 38, light: true },
     { kind: 'sign', x: 26, y: 9, interact: 'sign' },
+    // decorations
+    { kind: 'planter', x: 39, y: 14 }, { kind: 'planter', x: 56, y: 14 }, { kind: 'planter', x: 39, y: 27 }, { kind: 'planter', x: 56, y: 27 },
+    { kind: 'pumpkinpile', x: 54, y: 17, w: 2 },
+    { kind: 'haybale', x: 18, y: 8 }, { kind: 'haybale', x: 19, y: 8 }, { kind: 'haybale', x: 46, y: 26 },
+    { kind: 'scarecrow', x: 23, y: 14 },
+    { kind: 'barrel', x: 46, y: 10 }, { kind: 'crate', x: 46, y: 11 },
+    { kind: 'leafpile', x: 27, y: 14, flat: true }, { kind: 'leafpile', x: 34, y: 20, flat: true }, { kind: 'leafpile', x: 59, y: 25, flat: true },
+    { kind: 'leafpile', x: 11, y: 9, flat: true }, { kind: 'leafpile', x: 43, y: 33, flat: true }, { kind: 'leafpile', x: 60, y: 37, flat: true },
   ],
 
   // Named spots villagers walk to. face = direction they look when they arrive.
@@ -91,6 +99,9 @@ export const MAP = {
     bed: { w: 1, h: 2 }, cot: { w: 1, h: 2 }, stove: { w: 1, h: 1 }, table: { w: 2, h: 1 },
     chest: { w: 1, h: 1, search: true }, wardrobe: { w: 1, h: 1, search: true }, bookshelf: { w: 1, h: 1, search: true },
     plant: { w: 1, h: 1 }, rug: { w: 3, h: 2, flat: true }, shelf: { w: 3, h: 1 }, counter: { w: 4, h: 1 },
+    yarnbasket: { w: 1, h: 1 }, armchair: { w: 1, h: 1 }, potterywheel: { w: 1, h: 1 }, kiln: { w: 1, h: 1 }, bust: { w: 1, h: 1 },
+    gnomeshelf: { w: 1, h: 1 }, globe: { w: 1, h: 1 }, helm: { w: 1, h: 1 }, anchor: { w: 1, h: 1 }, fishtank: { w: 1, h: 1 },
+    oven: { w: 1, h: 1 }, floursacks: { w: 1, h: 1 }, cabinet: { w: 1, h: 1 }, papers: { w: 1, h: 1 }, flagstand: { w: 1, h: 1 },
     barrel: { w: 1, h: 1 }, desk: { w: 2, h: 1 }, lectern: { w: 2, h: 1 }, crate: { w: 1, h: 1 },
   },
 
@@ -120,5 +131,16 @@ export const MAP = {
     items: [['bed', 1, 2], ['bookshelf', 5, 2], ['wardrobe', 7, 2], ['table', 3, 4], ['chest', 7, 5], ['plant', 1, 5]],
     locs: { home: { x: 2, y: 2, face: 'left' } },
   },
+  // Personal touches per house (free tiles in the template: (3,2) (4,2) (6,2) (5,4) (5,5)).
+  houseExtras: {
+    odessa: [['yarnbasket', 3, 2], ['armchair', 6, 2], ['plant', 5, 5]],
+    wren: [['potterywheel', 3, 2], ['kiln', 6, 2], ['bust', 5, 5]],
+    fennel: [['gnomeshelf', 3, 2], ['globe', 6, 2], ['papers', 5, 5]],
+    hollis: [['helm', 3, 2], ['anchor', 6, 2], ['fishtank', 5, 5]],
+    barnaby: [['oven', 3, 2], ['floursacks', 6, 2], ['barrel', 5, 5]],
+    tib: [['cabinet', 3, 2], ['flagstand', 6, 2], ['papers', 5, 5]],
+  },
+  // Wandering cats: [colour, x, y, w, h] roaming rectangle.
+  cats: [['ginger', 40, 15, 16, 11], ['grey', 3, 8, 20, 3]],
   houseWalls: { odessa: 'lilac', wren: 'sage', fennel: 'tweed', hollis: 'navy', barnaby: 'butter', tib: 'rose' },
 };

@@ -41,6 +41,7 @@ export class UI {
     this._prompt = undefined;
     this.onQuit = null;
     this.game = null;
+    this.bubbles = [];
   }
 
   get blocking() { return !!this.modal; }
@@ -140,7 +141,32 @@ export class UI {
     }
   }
 
+  // Speech bubble above a villager (HTML, follows them on screen).
+  bubble(npc, text, delay = 0) {
+    if (this.bubbles.length >= 3) return;
+    this.bubbles.push({ npc, text, delay, t: 4.2, el: null });
+  }
+
+  _updateBubbles(dt) {
+    const game = this.game;
+    if (!game || !this.bubbles.length) return;
+    const r = game.renderer, dpr = window.devicePixelRatio || 1;
+    const area = game.mode === 'play' ? game.playerArea() : null;
+    for (const b of this.bubbles) {
+      if (b.delay > 0) { b.delay -= dt; continue; }
+      b.t -= dt;
+      const visible = area && b.npc.area === area && !b.npc.gnomed && !this.modal && b.t > 0;
+      if (!b.el && visible) { b.el = h('div', { class: 'bubble', text: b.text }); $('#hud').append(b.el); }
+      if (!b.el) continue;
+      b.el.style.display = visible ? '' : 'none';
+      b.el.style.left = `${((b.npc.x - Math.round(r.cam.x)) * r.scale) / dpr}px`;
+      b.el.style.top = `${((b.npc.y - 32 - Math.round(r.cam.y)) * r.scale) / dpr}px`;
+    }
+    this.bubbles = this.bubbles.filter((b) => { if (b.t > 0) return true; if (b.el) b.el.remove(); return false; });
+  }
+
   update(dt) {
+    this._updateBubbles(dt);
     const d = this.dlg;
     if (d && d.typing) {
       const before = Math.floor(d.shown);
@@ -571,9 +597,15 @@ export class UI {
   // ------------------------------------------------------------ pause / help
   openPause(game) {
     const soundBtn = h('button', { class: 'btn', onclick: () => { this.toggleMute(); soundBtn.textContent = t(Audio.muted ? 'ui.soundOff' : 'ui.soundOn'); } }, t(Audio.muted ? 'ui.soundOff' : 'ui.soundOn'));
+    const musicBtn = h('button', { class: 'btn', onclick: () => {
+      Audio.setMusic(!Audio.musicOn);
+      const st = Save.settings(); st.music = Audio.musicOn; Save.saveSettings(st);
+      musicBtn.textContent = t(Audio.musicOn ? 'ui.musicOn' : 'ui.musicOff');
+    } }, t(Audio.musicOn ? 'ui.musicOn' : 'ui.musicOff'));
     const body = h('div', { style: 'display:flex;flex-direction:column;gap:0.5rem;align-items:stretch;max-width:18rem;margin:0 auto' },
       h('button', { class: 'btn primary focus', onclick: () => this.close() }, t('ui.resume')),
       soundBtn,
+      musicBtn,
       h('button', { class: 'btn', onclick: () => this.openNotebook(game, 'help') }, t('ui.controls')),
       h('button', { class: 'btn', onclick: () => this.confirm(t('ui.quitConfirm'), t('ui.quit'), t('ui.cancel'), () => this.onQuit && this.onQuit(), { danger: true }) }, t('ui.quit')));
     this.open('pause', this.panel(t('ui.paused'), body));

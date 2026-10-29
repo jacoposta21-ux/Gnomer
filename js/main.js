@@ -27,6 +27,7 @@ async function boot() {
   const ui = new UI();
   const game = new Game({ renderer, ui, input });
   Audio.setMuted(!!Save.settings().muted);
+  Audio.setMusic(Save.settings().music !== false);
   ui.init(game);
   window.addEventListener('resize', () => { renderer.resize(); if (game.mode === 'play') renderer.snap(game); });
 
@@ -73,6 +74,8 @@ async function boot() {
     ui.update(dt);
     if (game.mode === 'play') ui.updateHud(game);
     renderer.render(game, dt);
+    Audio.music(game.mode === 'title' ? 'title' : game.mode !== 'play' ? null
+      : game.minutes >= 19 * 60 ? 'night' : game.weather === 'rain' && game.playerArea().outdoor ? 'rain' : 'day');
     Platform.setGameplay(game.mode === 'play' && !ui.blocking && !document.hidden);
     requestAnimationFrame(loop);
   };

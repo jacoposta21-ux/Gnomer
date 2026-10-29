@@ -131,6 +131,16 @@ export class Renderer {
       g.strokeRect(f.x * TILE + 0.5, f.y * TILE + 0.5, 15, 15);
     }
 
+    // ---- exit arrow over the doormat of the room we're in
+    if (!area.outdoor && area.mat) {
+      const bob = Math.round(Math.sin(this.time * 4) * 1.5);
+      const ax = area.mat.x * TILE + 4, ay = area.mat.y * TILE - 6 + bob;
+      g.fillStyle = 'rgba(20,12,16,0.5)';
+      g.fillRect(ax - 1, ay - 1, 10, 8);
+      g.fillStyle = PAL.litL;
+      g.fillRect(ax + 3, ay, 2, 3); g.fillRect(ax + 1, ay + 3, 6, 1); g.fillRect(ax + 2, ay + 4, 4, 1); g.fillRect(ax + 3, ay + 5, 2, 1);
+    }
+
     // ---- sorted sprites
     const list = [];
     for (const o of world.objects) {
@@ -143,21 +153,18 @@ export class Renderer {
       list.push({ y: n.y, ch: n });
     }
     if (game.mode !== 'title') list.push({ y: game.player.y, ch: game.player, player: true });
+    if (area.outdoor) for (const c of game.cats) list.push({ y: c.y, cat: c });
     list.sort((a, b) => a.y - b.y);
     for (const it of list) {
-      if (it.o) this._object(g, it.o, game);
+      if (it.cat) {
+        const c = it.cat, fr = c.moving ? 1 + (Math.floor(c.anim * 6) % 2) : 0;
+        g.drawImage(Art.cats[c.color][c.dir][fr], Math.round(c.x) - 7, Math.round(c.y) - 10);
+      } else if (it.o) this._object(g, it.o, game);
       else this._char(g, it.ch, it.player ? 'player' : it.ch.id, game);
     }
 
-    // ---- exit arrow over the doormat of the room we're in
-    if (!area.outdoor && area.mat) {
-      const bob = Math.round(Math.sin(this.time * 4) * 1.5);
-      const ax = area.mat.x * TILE + 4, ay = area.mat.y * TILE - 6 + bob;
-      g.fillStyle = 'rgba(20,12,16,0.5)';
-      g.fillRect(ax - 1, ay - 1, 10, 8);
-      g.fillStyle = PAL.litL;
-      g.fillRect(ax + 3, ay, 2, 3); g.fillRect(ax + 1, ay + 3, 6, 1); g.fillRect(ax + 2, ay + 4, 4, 1); g.fillRect(ax + 3, ay + 5, 2, 1);
-    }
+    // ---- festival bunting strung between the plaza lamps
+    if (area.outdoor) for (const [ax, bx, row] of [[38, 57, 14], [38, 57, 27]]) this._bunting(g, ax * TILE + 8, bx * TILE + 8, (row + 1) * TILE - 30);
 
     // ---- sparkles
     if (area.outdoor) {
@@ -177,6 +184,7 @@ export class Renderer {
 
     // ---- weather
     if (area.outdoor && game.weather === 'rain') this._rain(g, cx, cy);
+    else if (area.outdoor) this._leaves(g, cx, cy, dt);
 
     // ---- night
     g.setTransform(1, 0, 0, 1, 0, 0);
@@ -236,6 +244,38 @@ export class Renderer {
       g.fillStyle = PAL.yellow; g.fillRect(x + 3, y, 2, 5); g.fillRect(x + 3, y + 6, 2, 2);
     } else if (kind === 'sad') {
       g.fillStyle = '#6f8fbf'; g.fillRect(x + 3, y + 1, 2, 4); g.fillRect(x + 2, y + 3, 4, 2);
+    }
+  }
+
+  _bunting(g, x1, x2, y) {
+    const cols = [PAL.red, PAL.yellow, PAL.teal, PAL.orange, PAL.purple];
+    g.fillStyle = '#3a3438';
+    let i = 0;
+    for (let x = x1; x <= x2; x++) {
+      const k = (x - x1) / (x2 - x1);
+      const yy = Math.round(y + Math.sin(Math.PI * k) * 12);
+      g.fillStyle = '#3a3438';
+      g.fillRect(x, yy, 1, 1);
+      if ((x - x1) % 9 === 4 && x < x2 - 3) {
+        g.fillStyle = cols[i++ % cols.length];
+        g.fillRect(x - 2, yy + 1, 5, 2); g.fillRect(x - 1, yy + 3, 3, 2); g.fillRect(x, yy + 5, 1, 1);
+      }
+    }
+  }
+
+  // A few autumn leaves drifting across the screen (screen space, outdoors only).
+  _leaves(g, cx, cy, dt) {
+    if (!this.leaves) {
+      const cols = [PAL.leafO, PAL.leafR, PAL.leafY, PAL.leafB];
+      this.leaves = Array.from({ length: 14 }, (_, i) => ({ x: Math.random() * 400, y: Math.random() * 240, s: 8 + Math.random() * 10, p: Math.random() * 6, c: cols[i % 4] }));
+    }
+    for (const L of this.leaves) {
+      L.y += L.s * dt; L.x += Math.sin(this.time * 1.3 + L.p) * 10 * dt - 4 * dt; L.p += dt;
+      if (L.y > this.vh + 4) { L.y = -4; L.x = Math.random() * this.vw; }
+      if (L.x < -4) L.x = this.vw + 2;
+      const flip = Math.sin(this.time * 3 + L.p) > 0;
+      g.fillStyle = L.c;
+      g.fillRect(cx + Math.round(L.x), cy + Math.round(L.y), flip ? 2 : 1, flip ? 1 : 2);
     }
   }
 

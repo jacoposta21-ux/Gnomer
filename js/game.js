@@ -2,7 +2,8 @@
 // Rendering lives in renderer.js, overlays in ui.js, content in js/data + strings.
 import { World, T } from './world.js';
 import { RNG } from './rng.js';
-import { Player, NPC, DIRS } from './entities.js';
+import { Player, NPC, Cat, DIRS } from './entities.js';
+import { MAP } from './data/map.js';
 import { Inventory, HOTBAR } from './inventory.js';
 import { Farm } from './farming.js';
 import { Mystery } from './mystery.js';
@@ -45,6 +46,8 @@ export class Game {
     this.mystery = new Mystery();
     this.bin = [];
     this.emotes = [];
+    this.cats = MAP.cats.map(([color, ...rect]) => new Cat(color, rect));
+    this.banterT = 6;
     this.flags = { backpack: false, knownLoves: {}, introDone: false, tutDone: [], tutSkip: false };
     this.stats = { earned: 0, harvested: 0 };
   }
@@ -109,6 +112,7 @@ export class Game {
     this.player.placeAt(fh.x + 2, fh.y + 3, 'down');
     this.player.moving = false;
     for (const n of this.npcs.values()) { n.paused = false; n.snapToSchedule(this.world, this.minutes, this.weather); }
+    for (const c of this.cats) c.spawn(this.world);
     this._warned = {};
     this.renderer.snap(this);
   }
@@ -178,6 +182,9 @@ export class Game {
     if (p.bumped) this._onBump(p.bumped);
     this._checkPortal();
     for (const n of this.npcs.values()) n.update(dt, this.world, this.minutes, this.weather);
+    for (const c of this.cats) c.update(dt, this.world);
+    this.banterT -= dt;
+    if (this.banterT <= 0) { this.banterT = 9 + Math.random() * 9; this._banter(); }
     for (const e of this.emotes) e.t -= dt;
     if (this.emotes.length) this.emotes = this.emotes.filter((e) => e.t > 0);
     this._bumpT -= dt;
@@ -238,12 +245,55 @@ export class Game {
     return best;
   }
 
+  catInFront() {
+    const p = this.player;
+    if (!this.playerArea().outdoor) return null;
+    const [dx, dy] = DIRS[p.dir];
+    const fx = p.x + dx * 12, fy = p.y + dy * 12;
+    return this.cats.find((c) => Math.hypot(c.x - fx, c.y - fy) < 11) || null;
+  }
+
+  petCat(cat) {
+    if (cat.pettedDay === this.day) { this.ui.toast(t('msg.catIgnores')); return; }
+    cat.pettedDay = this.day;
+    cat.wait = Math.max(cat.wait, 3);
+    this.energy = Math.min(this.maxEnergy, this.energy + 5);
+    this.emote(cat, 'heart');
+    Audio.play('heart');
+    this.ui.toast(t('msg.petCat'));
+  }
+
+  // Villagers chatting among themselves: speech bubbles near the player.
+  _banter() {
+    const area = this.playerArea(), p = this.player;
+    const near = [...this.npcs.values()].filter((n) => !n.gnomed && !n.moving && !n.paused && n.area === area && Math.hypot(n.x - p.x, n.y - p.y) < 150);
+    if (!near.length) return;
+    const a = near[Math.floor(Math.random() * near.length)];
+    const partner = near.find((n) => n !== a && Math.hypot(n.x - a.x, n.y - a.y) < 90);
+    let line;
+    const m = this.mystery;
+    if (m.attacks.length && !m.solved && Math.random() < 0.35) {
+      // Gossip about a suspect: mostly noise, but the Gnomer is mentioned a bit more often.
+      const cands = VILLAGERS.filter((v) => v.candidate && v.id !== a.id && !this.npcs.get(v.id).gnomed).map((v) => v.id);
+      const who = cands.includes(m.gnomerId) && Math.random() < 0.35 ? m.gnomerId : cands[Math.floor(Math.random() * cands.length)];
+      const pool = tList('banter.gossip');
+      line = fmt(pool[Math.floor(Math.random() * pool.length)], { name: t(`npc.${who}.short`) });
+    } else {
+      const pool = tList(`npc.${a.id}.banter`);
+      line = pool[Math.floor(Math.random() * pool.length)];
+    }
+    this.ui.bubble(a, line, 0);
+    if (partner) { const r = tList('banter.replies'); this.ui.bubble(partner, r[Math.floor(Math.random() * r.length)], 2.6); }
+  }
+
   // Single source of truth for "what does E do right now?" -> { label, run }
   resolveAction() {
     const none = { label: null, run: () => this._useItem(this.player.facingTile()) };
     const p = this.player, f = p.facingTile();
     const npc = this.npcInFront();
     if (npc) return { label: t('prompt.talk', { name: t(`npc.${npc.id}.short`) }), run: () => this.talkTo(npc) };
+    const cat = this.catInFront();
+    if (cat) return { label: t('prompt.pet'), run: () => this.petCat(cat) };
     const obj = this.world.objectAt(f.x, f.y);
     if (obj && !obj.removed) {
       if (obj.kind === 'gnome') return { label: t('prompt.statue'), run: () => this.ui.say(null, fmt(t('statue.look'), { name: t(`npc.${obj.victim}.short`) })) };

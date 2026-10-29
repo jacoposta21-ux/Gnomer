@@ -1,5 +1,6 @@
 // Generated WebAudio sound effects (no files). The context is created on the first user gesture.
 let ctx = null, master = null, muted = false, noiseBuf = null;
+let musicGain = null, musicOn = true, musicMode = null, musicTimer = null, nextBeat = 0, beat = 0;
 
 function ensure() {
   if (ctx) { if (ctx.state === 'suspended') ctx.resume().catch(() => {}); return !!ctx; }
@@ -10,6 +11,9 @@ function ensure() {
     master = ctx.createGain();
     master.gain.value = muted ? 0 : 0.5;
     master.connect(ctx.destination);
+    musicGain = ctx.createGain();
+    musicGain.gain.value = musicOn ? 1 : 0;
+    musicGain.connect(master);
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -17,8 +21,8 @@ function ensure() {
   } catch { ctx = null; return false; }
 }
 
-function tone(freq, dur, { type = 'square', vol = 0.15, slide = 0, delay = 0, attack = 0.005 } = {}) {
-  const t0 = ctx.currentTime + delay;
+function tone(freq, dur, { type = 'square', vol = 0.15, slide = 0, delay = 0, attack = 0.005, at = null, out = null } = {}) {
+  const t0 = at !== null ? at : ctx.currentTime + delay;
   const o = ctx.createOscillator(), gn = ctx.createGain();
   o.type = type;
   o.frequency.setValueAtTime(freq, t0);
@@ -26,7 +30,7 @@ function tone(freq, dur, { type = 'square', vol = 0.15, slide = 0, delay = 0, at
   gn.gain.setValueAtTime(0.0001, t0);
   gn.gain.exponentialRampToValueAtTime(vol, t0 + attack);
   gn.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  o.connect(gn); gn.connect(master);
+  o.connect(gn); gn.connect(out || master);
   o.start(t0); o.stop(t0 + dur + 0.02);
 }
 
@@ -62,8 +66,41 @@ const SFX = {
   caught: () => { tone(300, 0.2, { type: 'square', vol: 0.08 }); tone(220, 0.3, { type: 'square', vol: 0.08, delay: 0.15 }); },
 };
 
+// ---------------------------------------------------------------- generative music
+// A gentle loop that never repeats exactly: pad chords + bass + a sparse pentatonic melody.
+const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
+const MUSIC = {
+  day:   { bpm: 84, root: 60, scale: [0, 2, 4, 7, 9], chords: [[0, 4, 7], [-3, 0, 4], [-7, -3, 0], [-5, -1, 2]], density: 0.55, vol: 1 },
+  rain:  { bpm: 72, root: 57, scale: [0, 2, 3, 7, 9], chords: [[0, 3, 7], [-4, 0, 3], [-7, -4, 0], [-2, 2, 5]], density: 0.35, vol: 0.9 },
+  night: { bpm: 60, root: 57, scale: [0, 3, 5, 7, 10], chords: [[0, 3, 7], [-4, 0, 3], [-2, 2, 5], [-5, -2, 2]], density: 0.3, vol: 0.8 },
+  title: { bpm: 70, root: 55, scale: [0, 3, 5, 7, 10], chords: [[0, 3, 7], [1, 5, 8], [-2, 2, 5], [-5, -1, 2]], density: 0.45, vol: 0.9 },
+};
+
+function scheduleMusic() {
+  if (!ctx || !musicMode) return;
+  const m = MUSIC[musicMode];
+  const spb = 60 / m.bpm;
+  if (nextBeat < ctx.currentTime) nextBeat = ctx.currentTime + 0.05;
+  while (nextBeat < ctx.currentTime + 0.6) {
+    const bar = Math.floor(beat / 4) % m.chords.length, b = beat % 4;
+    const chord = m.chords[bar];
+    if (b === 0) {
+      for (const n of chord) tone(midi(m.root + n), spb * 4.2, { type: 'sine', vol: 0.028 * m.vol, attack: 0.6, at: nextBeat, out: musicGain });
+      tone(midi(m.root - 12 + chord[0]), spb * 1.8, { type: 'triangle', vol: 0.05 * m.vol, attack: 0.05, at: nextBeat, out: musicGain });
+    }
+    if (b === 2) tone(midi(m.root - 12 + chord[0] + 7), spb * 1.5, { type: 'triangle', vol: 0.035 * m.vol, attack: 0.05, at: nextBeat, out: musicGain });
+    if (Math.random() < m.density) {
+      const deg = m.scale[Math.floor(Math.random() * m.scale.length)];
+      const off = Math.random() < 0.5 ? spb / 2 : 0;
+      tone(midi(m.root + 12 + deg), spb * 0.9, { type: 'triangle', vol: 0.04 * m.vol, attack: 0.02, at: nextBeat + off, out: musicGain });
+    }
+    nextBeat += spb;
+    beat++;
+  }
+}
+
 export const Audio = {
-  unlock() { ensure(); },
+  unlock() { if (ensure()) this.resumeMusic(); },
   play(name, arg) {
     if (muted || !SFX[name]) return;
     if (!ensure()) return;
@@ -74,4 +111,19 @@ export const Audio = {
     muted = !!m;
     if (master) master.gain.value = muted ? 0 : 0.5;
   },
+  get musicOn() { return musicOn; },
+  setMusic(on) {
+    musicOn = !!on;
+    if (musicGain) musicGain.gain.value = musicOn ? 1 : 0;
+  },
+  // mode: 'day' | 'rain' | 'night' | 'title' | null. Cheap to call every frame.
+  music(mode) {
+    if (mode === musicMode) return;
+    musicMode = mode;
+    if (!ctx || !mode) { if (musicTimer) { clearInterval(musicTimer); musicTimer = null; } return; }
+    beat = 0; nextBeat = ctx.currentTime + 0.3;
+    if (!musicTimer) musicTimer = setInterval(() => { try { scheduleMusic(); } catch { /* never break the game */ } }, 200);
+  },
+  // Called after the first user gesture creates the context: start whatever mode was requested.
+  resumeMusic() { const m = musicMode; musicMode = null; this.music(m); },
 };
