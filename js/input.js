@@ -3,7 +3,7 @@
 const KEYMAP = {
   KeyW: 'up', ArrowUp: 'up', KeyS: 'down', ArrowDown: 'down', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right',
   KeyE: 'action', Space: 'action', Enter: 'action', NumpadEnter: 'action',
-  Tab: 'notebook', KeyN: 'notebook', Escape: 'pause', KeyP: 'pause', KeyI: 'bag', KeyB: 'bag', KeyM: 'mute',
+  Tab: 'notebook', KeyN: 'notebook', Escape: 'pause', KeyP: 'pause', KeyI: 'bag', KeyB: 'bag', KeyM: 'mute', KeyF: 'wait',
   Digit1: 'hot0', Digit2: 'hot1', Digit3: 'hot2', Digit4: 'hot3', Digit5: 'hot4',
   Numpad1: 'hot0', Numpad2: 'hot1', Numpad3: 'hot2', Numpad4: 'hot3', Numpad5: 'hot4',
 };
@@ -11,26 +11,37 @@ const PREVENT = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Spa
 
 export class Input {
   constructor() {
-    this.held = new Set();
+    this.held = new Set();   // movement directions currently held
+    this.heldCodes = new Map(); // key code -> direction (so W and ArrowUp don't cancel each other)
     this.queue = [];
     this.joy = { id: null, ox: 0, oy: 0, x: 0, y: 0 };
     this.touchMode = false;
     this.onFirstGesture = null;
     this._wheelT = 0;
-    this.pad = { x: 0, y: 0, prev: [], axisDir: null };
+    this.pad = { x: 0, y: 0, prev: [], axisDir: null, active: false };
 
     window.addEventListener('keydown', (e) => {
       const a = KEYMAP[e.code];
       if (PREVENT.has(e.code)) e.preventDefault();
       this._gesture();
       if (!a) return;
-      if (['up', 'down', 'left', 'right'].includes(a)) this.held.add(a);
+      if (['up', 'down', 'left', 'right'].includes(a)) { this.heldCodes.set(e.code, a); this._syncHeld(); }
       if (!e.repeat) this.queue.push(a);
     });
-    window.addEventListener('keyup', (e) => { const a = KEYMAP[e.code]; if (a) this.held.delete(a); });
-    window.addEventListener('blur', () => { this.held.clear(); this._joyEnd(); });
+    window.addEventListener('keyup', (e) => {
+      // With Cmd/Ctrl/Alt down, browsers often swallow the keyup of other keys: drop everything.
+      if (['MetaLeft', 'MetaRight', 'ControlLeft', 'ControlRight', 'AltLeft', 'AltRight'].includes(e.code)) { this.clearHeld(); return; }
+      this.heldCodes.delete(e.code);
+      this._syncHeld();
+    });
+    // Anything that can steal focus also releases all keys, so a missed keyup never leaves you walking.
+    window.addEventListener('blur', () => this.clearHeld());
+    document.addEventListener('visibilitychange', () => this.clearHeld());
+    window.addEventListener('contextmenu', () => this.clearHeld());
     window.addEventListener('pointerdown', () => this._gesture(), { capture: true });
   }
+
+  _syncHeld() { this.held = new Set(this.heldCodes.values()); }
 
   _gesture() { if (this.onFirstGesture) { const f = this.onFirstGesture; this.onFirstGesture = null; f(); } }
 
@@ -75,6 +86,8 @@ export class Input {
     els.action.addEventListener('touchstart', (e) => { e.preventDefault(); this.setTouchMode(true); this._gesture(); this.queue.push('action'); }, { passive: false });
     els.action.addEventListener('mousedown', (e) => { e.preventDefault(); this.queue.push('action'); });
     window.addEventListener('touchstart', () => this.setTouchMode(true), { passive: true, capture: true });
+    // safety net: when no finger is on the screen any more, the joystick is released
+    window.addEventListener('touchend', (e) => { if (!e.touches.length) this._joyEnd(); }, { passive: true });
   }
 
   setTouchMode(on) {
@@ -99,6 +112,10 @@ export class Input {
     const gp = [...pads].find((p) => p && p.connected);
     this.pad.x = this.pad.y = 0;
     if (!gp) return;
+    // Some PCs expose phantom "gamepads" with drifting sticks: ignore the pad until a real button press.
+    if (!this.pad.active) {
+      if (gp.buttons.some((b) => b.pressed)) this.pad.active = true; else return;
+    }
     const map = { 0: 'action', 1: 'pause', 2: 'bag', 3: 'notebook', 4: 'hotPrev', 5: 'hotNext', 9: 'pause', 12: 'up', 13: 'down', 14: 'left', 15: 'right' };
     gp.buttons.forEach((b, i) => {
       const down = b.pressed || b.value > 0.5;
@@ -106,7 +123,7 @@ export class Input {
       this.pad.prev[i] = down;
     });
     let x = gp.axes[0] || 0, y = gp.axes[1] || 0;
-    if (Math.hypot(x, y) < 0.25) x = y = 0;
+    if (Math.hypot(x, y) < 0.35) x = y = 0;
     const b = gp.buttons;
     if (b[14] && b[14].pressed) x = -1; if (b[15] && b[15].pressed) x = 1;
     if (b[12] && b[12].pressed) y = -1; if (b[13] && b[13].pressed) y = 1;
@@ -128,5 +145,5 @@ export class Input {
   }
 
   consume() { const q = this.queue; this.queue = []; return q; }
-  clearHeld() { this.held.clear(); this._joyEnd(); }
+  clearHeld() { this.heldCodes.clear(); this.held.clear(); this._joyEnd(); }
 }

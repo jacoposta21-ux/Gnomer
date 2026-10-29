@@ -14,6 +14,7 @@ export const ACHIEVEMENTS = [
   { id: 'night_owl', test: (g) => (g.stats.scared || 0) >= 1 },
   { id: 'helper', test: (g, p) => p.stats.quests >= 5 },
   { id: 'rich', test: (g) => g.money >= 3000 },
+  { id: 'angler', test: (g, p) => p.stats.fish >= 10 },
   { id: 'cat_person', test: (g, p) => p.stats.pets >= 10 },
   { id: 'case_closed', test: (g) => g.mystery.solved },
   { id: 'flawless', test: (g) => g.mystery.solved && g.mystery.victims.length === 0 },

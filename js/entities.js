@@ -187,6 +187,9 @@ export class Cat {
     this.wait = 0;
     this.target = null;
     this.pettedDay = 0;
+    this.pets = 0;        // pets today (companions can be petted several times)
+    this.friendUntil = 0; // day number until which it follows the player
+    this.area = null;
   }
   get tx() { return Math.floor(this.x / TILE); }
   get ty() { return Math.floor(this.y / TILE); }
@@ -206,8 +209,23 @@ export class Cat {
     this.wait = 1 + Math.random() * 3;
   }
 
+  // A befriended cat trots after the player (and hops through doors with them).
+  follow(dt, world, player, playerArea) {
+    this.anim += dt;
+    const back = { up: [0, 1], down: [0, -1], left: [1, 0], right: [-1, 0] }[player.dir];
+    const tx = player.x + back[0] * 14, ty = player.y + back[1] * 12;
+    const d = Math.hypot(tx - this.x, ty - this.y);
+    if (this.area !== playerArea || d > 140) { this.x = tx; this.y = ty; this.area = playerArea; this.moving = false; return; }
+    if (d < 6) { this.moving = false; return; }
+    const step = Math.min(d, (d > 40 ? 95 : 70) * dt);
+    this.x += ((tx - this.x) / d) * step; this.y += ((ty - this.y) / d) * step;
+    this.moving = true;
+    if (Math.abs(tx - this.x) > 0.5) this.dir = tx > this.x ? 'right' : 'left';
+  }
+
   update(dt, world) {
     this.anim += dt;
+    this.area = world.areaAt(this.tx, this.ty);
     if (this.wait > 0) { this.wait -= dt; this.moving = false; return; }
     if (!this.target) {
       const t = this._randomTile(world);

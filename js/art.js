@@ -798,6 +798,16 @@ function itemIcon(id) {
     case 'hard_cheese': R(g, 2, 7, 12, 7, '#e8c25a'); R(g, 2, 5, 9, 2, '#f2d27a'); R(g, 11, 5, 3, 2, '#e8c25a'); P(g, 5, 9, '#c89a3a'); P(g, 9, 11, '#c89a3a'); P(g, 11, 8, '#c89a3a'); break;
     case 'garlic_garland': for (let i = 0; i < 5; i++) { const x = 2 + i * 3, y = 4 + Math.abs(2 - i) * -1 + 4; R(g, x, y, 3, 3, PAL.garlic); P(g, x + 1, y - 1, PAL.leafG); } R(g, 2, 3, 12, 1, PAL.leafB); break;
     case 'pumpkin_ward': R(g, 3, 5, 10, 9, PAL.pumpkin); R(g, 7, 2, 2, 3, PAL.leafB); R(g, 5, 8, 2, 2, PAL.lit); R(g, 9, 8, 2, 2, PAL.lit); R(g, 6, 11, 4, 1, PAL.lit); R(g, 3, 5, 10, 1, '#f7a44a'); break;
+    case 'fishing_rod': for (let i = 0; i < 12; i++) R(g, 2 + i, 13 - i, 1, 1, i < 4 ? PAL.woodD : PAL.wood); R(g, 13, 1, 1, 10, '#d8d4c8'); R(g, 12, 11, 3, 2, PAL.red); R(g, 3, 10, 3, 3, '#5a565c'); break;
+    case 'mudminnow': case 'river_perch': case 'silver_eel': case 'golden_carp': {
+      const c = { mudminnow: ['#8a7a5a', '#6a5a3a'], river_perch: ['#7d9a48', '#4f6a2e'], silver_eel: ['#b8c4cc', '#7f8f99'], golden_carp: ['#e2b54a', '#c47a2a'] }[id];
+      if (id === 'silver_eel') { R(g, 1, 7, 14, 3, c[0]); R(g, 2, 6, 10, 1, c[1]); R(g, 13, 6, 2, 1, c[0]); P(g, 3, 8, PAL.ink); break; }
+      R(g, 3, 5, 9, 6, c[0]); R(g, 2, 6, 11, 4, c[0]); R(g, 4, 5, 6, 1, c[1]); R(g, 12, 4, 3, 8, c[1]); R(g, 13, 6, 2, 4, c[0]);
+      P(g, 4, 7, PAL.ink); P(g, 6, 9, c[1]); P(g, 8, 8, c[1]);
+      if (id === 'river_perch') for (let x = 5; x < 11; x += 2) R(g, x, 6, 1, 4, c[1]);
+      if (id === 'golden_carp') { P(g, 5, 6, '#fff0b0'); P(g, 7, 7, '#fff0b0'); }
+      break;
+    }
     case 'backpack': R(g, 3, 4, 10, 11, '#7a5a3a'); R(g, 4, 2, 8, 3, '#8a6a4a'); R(g, 5, 8, 6, 4, '#9a7a5a'); R(g, 7, 9, 2, 1, PAL.yellow); break;
     default: R(g, 4, 4, 8, 8, '#ff00ff');
   }
@@ -929,6 +939,8 @@ export function buildArt() {
   }
   Art.ui = {
     soundOn: uiIcon('sound', true).toDataURL(), soundOff: uiIcon('sound', false).toDataURL(),
+    coin: (() => { const [c, g] = mk(12, 12); R(g, 3, 1, 6, 10, '#b8862a'); R(g, 1, 3, 10, 6, '#b8862a'); R(g, 2, 2, 8, 8, '#b8862a');
+      R(g, 3, 2, 6, 8, '#e2b54a'); R(g, 2, 3, 8, 6, '#e2b54a'); R(g, 5, 4, 2, 4, '#b8862a'); P(g, 3, 3, '#fff0b0'); P(g, 4, 2, '#fff0b0'); return c.toDataURL(); })(),
     bag: uiIcon('bag').toDataURL(), book: uiIcon('book').toDataURL(), pause: uiIcon('pause').toDataURL(),
   };
   return Art;

@@ -16,7 +16,7 @@ const { DAY_END } = await import('../js/time.js');
 function makeGame() {
   const ui = {
     blocking: false, endings: [], toasts: [], last: null,
-    toast(m) { this.toasts.push(m); }, say(w, text) { this.last = text; }, flash() {}, setPrompt() {}, handleActions() {},
+    toast(m) { this.toasts.push(m); }, fishBar() {}, setWaiting() {}, areaBanner() {}, say(w, text) { this.last = text; }, flash() {}, setPrompt() {}, handleActions() {},
     dialogue(pages, done) { this.last = pages.map((p) => p.text).join(' / '); if (done) done(); },
     confirm(text, y, n, onYes) { onYes(); }, showMorning() {}, showEnding(type) { this.endings.push(type); },
     openBin() {}, openCraft() {}, openBoard() {}, openShop() {}, openAccuse() {}, openNotebook() {}, openBag() {}, openPause() {},
@@ -291,6 +291,40 @@ assert.ok(results.minEvidenceBeforeLoss >= 4, 'a diligent player always has at l
     assert.equal(bad.length, 0, `no alibi/herring about gnomed ${innocent}`);
   }
   console.log('no clues about gnomed suspects: ok');
+}
+
+// 14) Fishing, cat companion, quiet nights, waiting
+{
+  const { game } = makeGame(); game.newGame();
+  game.money = 1000; assert.ok(game.buy('fishing_rod'));
+  const water = { x: 29, y: 30 };
+  game.startFishing(water);
+  assert.equal(game.fishing.phase, 'wait');
+  game._fishUpdate(10); assert.equal(game.fishing.phase, 'bite', 'a fish bites');
+  game._fishInput(); assert.equal(game.fishing.phase, 'reel');
+  game.fishing.pos = game.fishing.center; game._fishInput();
+  const fish = ['mudminnow', 'river_perch', 'silver_eel', 'golden_carp'].reduce((n, id) => n + game.inv.count(id), 0);
+  assert.equal(fish, 1, 'caught a fish'); assert.equal(game.fishing, null);
+  game.startFishing(water); game._fishInput(); assert.equal(game.fishing, null, 'reeling in too soon cancels');
+
+  game.inv.add('mudminnow', 1);
+  const cat = game.cats[0];
+  game.feedCat(cat, 'mudminnow');
+  assert.equal(cat.friendUntil, game.day + 2);
+  const fh = game.world.areaById.farmhouse;
+  game.player.placeAt(fh.x + 3, fh.y + 4, 'down');
+  for (let i = 0; i < 60; i++) game._tick(1 / 60);
+  assert.equal(cat.area, game.playerArea(), 'companion cat follows the player indoors');
+  game.energy = 50; for (let i = 0; i < 3; i++) game.petCat(cat); assert.equal(game.energy, 65, 'companion can be petted 3 times');
+  game.petCat(cat); assert.equal(game.energy, 65);
+  game.sleep(false); game.sleep(false);
+  assert.ok(cat.friendUntil <= game.day, 'companionship lasts two days');
+
+  const { game: g2 } = makeGame(); g2.newGame();
+  g2.mystery.nextAttack = 99; g2.minutes = 21 * 60; const m0 = g2.minutes; g2._tick(1);
+  assert.ok(g2.minutes - m0 > 4, 'quiet nights pass faster');
+  g2.startWaiting(); assert.ok(g2.waiting); g2.stopWaiting(); assert.ok(!g2.waiting);
+  console.log('fishing, cat, nights, waiting: ok');
 }
 
 // 12) Every translation has the same keys and {placeholders} as English

@@ -153,7 +153,7 @@ export class Renderer {
       list.push({ y: n.y, ch: n });
     }
     if (game.mode !== 'title') list.push({ y: game.player.y, ch: game.player, player: true });
-    if (area.outdoor) for (const c of game.cats) list.push({ y: c.y, cat: c });
+    for (const c of game.cats) if ((c.area || world.areaById.outdoor) === area) list.push({ y: c.y, cat: c });
     list.sort((a, b) => a.y - b.y);
     for (const it of list) {
       if (it.cat) {
@@ -161,6 +161,19 @@ export class Renderer {
         g.drawImage(Art.cats[c.color][c.dir][fr], Math.round(c.x) - 7, Math.round(c.y) - 10);
       } else if (it.o) this._object(g, it.o, game);
       else this._char(g, it.ch, it.player ? 'player' : it.ch.id, game);
+    }
+
+    // ---- fishing line + bobber
+    if (game.fishing) {
+      const F = game.fishing, p = game.player;
+      const [dx, dy] = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[p.dir];
+      const hx = Math.round(p.x + dx * 6), hy = Math.round(p.y - 14 + dy * 2);
+      const bx = F.tile.x * TILE + 8, dip = F.phase === 'bite' ? 2 : 0;
+      const by = F.tile.y * TILE + 8 + Math.round(Math.sin(this.time * 3) * 1) + dip;
+      g.strokeStyle = 'rgba(240,235,220,0.8)'; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(hx + 0.5, hy + 0.5); g.quadraticCurveTo((hx + bx) / 2, Math.min(hy, by) - 10, bx + 0.5, by + 0.5); g.stroke();
+      g.fillStyle = PAL.red; g.fillRect(bx - 1, by - 2, 3, 2); g.fillStyle = PAL.white; g.fillRect(bx - 1, by, 3, 1);
+      if (F.phase === 'bite') { g.fillStyle = 'rgba(200,220,235,0.8)'; g.fillRect(bx - 4, by + 2, 2, 1); g.fillRect(bx + 3, by + 2, 2, 1); }
     }
 
     // ---- festival bunting strung between the plaza lamps
@@ -175,6 +188,7 @@ export class Renderer {
     }
 
     // ---- objective arrow (tutorial)
+    this.arrowPos = null;
     if (game.mode === 'play') this._objectiveArrow(g, game.tutTarget(), cx, cy);
 
     // ---- emotes
@@ -187,7 +201,6 @@ export class Renderer {
 
     // ---- weather
     if (area.outdoor && game.weather === 'rain') this._rain(g, cx, cy);
-    else if (area.outdoor) this._leaves(g, cx, cy, dt);
 
     // ---- night
     g.setTransform(1, 0, 0, 1, 0, 0);
@@ -271,6 +284,7 @@ export class Renderer {
 
   // Bouncing arrow over the objective, or a pointer at the screen edge when it's off screen.
   _objectiveArrow(g, tile, cx, cy) {
+    this.arrowPos = null; // screen position (canvas px) for the HTML label next to the arrow
     if (!tile) return;
     const tx = tile.x * TILE + 8, ty = tile.y * TILE - 4;
     const bob = Math.round(Math.sin(this.time * 5) * 2);
@@ -280,6 +294,7 @@ export class Renderer {
       g.fillStyle = '#2b2125'; g.fillRect(x - 1, y - 1, 10, 11);
       g.fillStyle = PAL.yellow;
       g.fillRect(x + 2, y, 4, 5); g.fillRect(x, y + 5, 8, 1); g.fillRect(x + 1, y + 6, 6, 1); g.fillRect(x + 2, y + 7, 4, 1); g.fillRect(x + 3, y + 8, 2, 1);
+      this.arrowPos = { x: tx - cx, y: y - cy - 2, edge: false };
       return;
     }
     // edge pointer: a small triangle on the border toward the target
@@ -293,6 +308,7 @@ export class Renderer {
     g.fillStyle = '#2b2125'; g.beginPath(); g.moveTo(9, 0); g.lineTo(-6, -7); g.lineTo(-6, 7); g.closePath(); g.fill();
     g.fillStyle = PAL.yellow; g.beginPath(); g.moveTo(6, 0); g.lineTo(-4, -5); g.lineTo(-4, 5); g.closePath(); g.fill();
     g.restore();
+    this.arrowPos = { x: px - cx - Math.cos(ang) * 22, y: py - cy - Math.sin(ang) * 14, edge: true };
   }
 
   _bunting(g, x1, x2, y) {
@@ -308,22 +324,6 @@ export class Renderer {
         g.fillStyle = cols[i++ % cols.length];
         g.fillRect(x - 2, yy + 1, 5, 2); g.fillRect(x - 1, yy + 3, 3, 2); g.fillRect(x, yy + 5, 1, 1);
       }
-    }
-  }
-
-  // A few autumn leaves drifting across the screen (screen space, outdoors only).
-  _leaves(g, cx, cy, dt) {
-    if (!this.leaves) {
-      const cols = [PAL.leafO, PAL.leafR, PAL.leafY, PAL.leafB];
-      this.leaves = Array.from({ length: 14 }, (_, i) => ({ x: Math.random() * 400, y: Math.random() * 240, s: 8 + Math.random() * 10, p: Math.random() * 6, c: cols[i % 4] }));
-    }
-    for (const L of this.leaves) {
-      L.y += L.s * dt; L.x += Math.sin(this.time * 1.3 + L.p) * 10 * dt - 4 * dt; L.p += dt;
-      if (L.y > this.vh + 4) { L.y = -4; L.x = Math.random() * this.vw; }
-      if (L.x < -4) L.x = this.vw + 2;
-      const flip = Math.sin(this.time * 3 + L.p) > 0;
-      g.fillStyle = L.c;
-      g.fillRect(cx + Math.round(L.x), cy + Math.round(L.y), flip ? 2 : 1, flip ? 1 : 2);
     }
   }
 

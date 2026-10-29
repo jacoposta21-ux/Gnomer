@@ -12,6 +12,7 @@ import { ITEMS, BACKPACK, START_INVENTORY, START_MONEY, START_INV_SIZE } from '.
 import { CROPS, DEBRIS } from './data/crops.js';
 import { RECIPES } from './data/recipes.js';
 import { TUTORIAL } from './data/tutorial.js';
+import { FISH, FISHING } from './data/fish.js';
 import { VILLAGERS, FRIENDSHIP } from './data/villagers.js';
 import { MINUTES_PER_SECOND, DAY_START, DAY_END, SEASON_DAYS, storeOpen, doorLocked } from './time.js';
 import { t, tList, fmt } from './i18n.js';
@@ -22,6 +23,8 @@ import { Progress } from './progress.js';
 
 const STEP = 1 / 240; // fixed simulation step: identical behaviour at any refresh rate
 const MAX_ENERGY = 100;
+const WAIT_SPEED = 6;   // "Wait" fast-forwards the whole world this many times
+const NIGHT_CLOCK = 2;  // on quiet nights (no Gnomer about) the clock runs this much faster after 20:00
 
 export class Game {
   constructor({ renderer, ui, input }) {
@@ -115,7 +118,12 @@ export class Game {
     this.player.placeAt(fh.x + 2, fh.y + 3, 'down');
     this.player.moving = false;
     for (const n of this.npcs.values()) { n.paused = false; n.snapToSchedule(this.world, this.minutes, this.weather); }
-    for (const c of this.cats) c.spawn(this.world);
+    this.fishing = null; this.ui.fishBar && this.ui.fishBar(null);
+    this.cats.forEach((c, i) => {
+      c.spawn(this.world);
+      c.friendUntil = (this.flags.catUntil && this.flags.catUntil[i]) || 0;
+      if (c.friendUntil > this.day) { c.x = this.player.x + 14; c.y = this.player.y; c.area = this.playerArea(); }
+    });
     this._warned = {};
     this.renderer.snap(this);
   }
@@ -245,6 +253,15 @@ export class Game {
     if (tg.mat) { if (here.id !== tg.mat) return null; return { x: here.mat.x, y: here.mat.y }; }
     if (tg.field) tile = { x: W.field.x + (W.field.w >> 1), y: W.field.y + (W.field.h >> 1) };
     if (tg.place) tile = { x: tg.place[0], y: tg.place[1] };
+    if (tg.npc) { // nearest villager, preferring ones in the same room
+      const p = this.player;
+      const cands = [...this.npcs.values()].filter((n) => !n.gnomed && !n.hooded && n.area);
+      cands.sort((a, b) => ((a.area !== here) - (b.area !== here)) || (Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y)));
+      const n = cands[0];
+      if (!n) return null;
+      tile = { x: n.tx, y: n.ty - 1 };
+      area = n.area;
+    }
     if (tg.sparkle) {
       const p = this.player;
       const sp = [...this.mystery.sparkles].sort((a, b) => Math.hypot(a.x - p.tx, a.y - p.ty) - Math.hypot(b.x - p.tx, b.y - p.ty))[0];
@@ -266,6 +283,13 @@ export class Game {
   // The coming night is an attack night (villagers can feel it).
   get omenTonight() { return this.mystery.diff.omen && !this.mystery.solved && !this.mystery.outcome && this.day === this.mystery.nextAttack; }
 
+  // Human name of a room: "Odessa's house", "Town Hall"...
+  areaName(area) {
+    if (!area || area.outdoor) return null;
+    if (area.owner) return t('area.house', { name: t(`npc.${area.owner}.short`) });
+    return t(`area.${area.id}`);
+  }
+
   playerArea() { return this.world.areaAt(this.player.tx, this.player.ty) || this.world.areaById.outdoor; }
 
   // ------------------------------------------------------------ main loop
@@ -281,11 +305,25 @@ export class Game {
       this.renderer.updateCamera(dt, this);
       return;
     }
+    if (this.fishing) {
+      // while fishing, E reels in and anything else (moving, Esc) puts the rod away
+      for (const a of actions) {
+        if (a === 'action' || a === 'click') this._fishInput();
+        else if (!/^hot|^wait$/.test(a)) this.stopFishing(true);
+      }
+      if (Math.hypot(this.input.move.x, this.input.move.y) > 0.5) this.stopFishing(true);
+      if (this.fishing) this._fishUpdate(dt);
+      actions.length = 0;
+    }
+    // waiting (fast-forward) stops as soon as the player does anything
+    if (this.waiting && (actions.some((a) => a !== 'wait') || Math.hypot(this.input.move.x, this.input.move.y) > 0.15)) this.stopWaiting();
     for (const a of actions) this._action(a);
-    if (this.ui.blocking || this.mode !== 'play') return; // an action may have opened a menu
+    if (this.ui.blocking || this.mode !== 'play') { this.stopWaiting(); return; } // an action may have opened a menu
 
-    this.acc += dt;
-    while (this.acc >= STEP) { this.acc -= STEP; this._tick(STEP); if (this.mode !== 'play' || this.ui.blocking) { this.acc = 0; break; } }
+    this.acc += dt * (this.waiting ? WAIT_SPEED : 1);
+    let guard = 0;
+    while (this.acc >= STEP && guard++ < 400) { this.acc -= STEP; this._tick(STEP); if (this.mode !== 'play' || this.ui.blocking) { this.acc = 0; this.stopWaiting(); break; } }
+    if (guard >= 400) this.acc = 0;
     this.renderer.updateCamera(dt, this);
     const cur = this.inv.current;
     this.showCursor = !!cur && ['tool', 'seed'].includes(ITEMS[cur.id].type);
@@ -301,17 +339,31 @@ export class Game {
     if (a === 'bag') { this.ui.openBag(this); return; }
     if (a === 'pause') { this.ui.openPause(this); return; }
     if (a === 'mute') this.ui.toggleMute();
+    if (a === 'wait') { if (this.waiting) this.stopWaiting(); else this.startWaiting(); }
   }
+
+  startWaiting() { this.waiting = true; this.input.clearHeld(); this.ui.setWaiting(true); }
+  stopWaiting() { if (!this.waiting) return; this.waiting = false; this.ui.setWaiting(false); }
+
+  // The Gnomer only prowls on attack nights; other nights are skipped through faster.
+  get quietNight() { return this.minutes >= 20 * 60 && (this.mystery.solved || this.day !== this.mystery.nextAttack || this.mystery.outcome); }
 
   _tick(dt) {
     const before = this.minutes;
-    this.minutes += dt * MINUTES_PER_SECOND;
+    this.minutes += dt * MINUTES_PER_SECOND * (this.quietNight ? NIGHT_CLOCK : 1);
     const p = this.player;
-    p.update(dt, this.input.move, (x, y) => this._blockedForPlayer(x, y));
+    p.update(dt, this.waiting || this.fishing ? { x: 0, y: 0 } : this.input.move, (x, y) => this._blockedForPlayer(x, y));
+    if (this.waiting && before < 22.5 * 60 && this.minutes >= 22.5 * 60 && this.day === this.mystery.nextAttack && !this.mystery.solved) {
+      this.stopWaiting();
+      this.ui.toast(t('msg.prowlTime'), 'warn');
+    }
     if (p.bumped) this._onBump(p.bumped);
     this._checkPortal();
     for (const n of this.npcs.values()) n.update(dt, this.world, this.minutes, this.weather);
-    for (const c of this.cats) c.update(dt, this.world);
+    for (const c of this.cats) {
+      if (c.friendUntil > this.day) c.follow(dt, this.world, p, this.playerArea());
+      else c.update(dt, this.world);
+    }
     this._achT = (this._achT || 0) - dt;
     if (this._achT <= 0) { this._achT = 1; this.checkAchievements(); }
     this.banterT -= dt;
@@ -354,6 +406,7 @@ export class Game {
     if (portal.kind === 'door' && p.dir === 'up') {
       if (doorLocked(portal.lock, this.day, this.minutes)) return;
       p.placeAt(portal.to.x, portal.to.y, 'up');
+      this.ui.areaBanner(this.areaName(this.playerArea()));
     } else if (portal.kind === 'exit' && p.dir === 'down') {
       p.placeAt(portal.to.x, portal.to.y, 'down');
       this.tut('exit');
@@ -378,22 +431,96 @@ export class Game {
   }
 
   catInFront() {
-    const p = this.player;
-    if (!this.playerArea().outdoor) return null;
+    const p = this.player, area = this.playerArea();
     const [dx, dy] = DIRS[p.dir];
     const fx = p.x + dx * 12, fy = p.y + dy * 12;
-    return this.cats.find((c) => Math.hypot(c.x - fx, c.y - fy) < 11) || null;
+    return this.cats.find((c) => (c.area || this.world.areaById.outdoor) === area && Math.hypot(c.x - fx, c.y - fy) < 12) || null;
   }
 
   petCat(cat) {
-    if (cat.pettedDay === this.day) { this.ui.toast(t('msg.catIgnores')); return; }
-    cat.pettedDay = this.day;
+    const friend = cat.friendUntil > this.day;
+    if (cat.pettedDay !== this.day) { cat.pettedDay = this.day; cat.pets = 0; }
+    if (cat.pets >= (friend ? FISHING.catPets : 1)) { this.ui.toast(t('msg.catIgnores')); return; }
+    cat.pets++;
     Progress.add('pets');
-    cat.wait = Math.max(cat.wait, 3);
+    if (!friend) cat.wait = Math.max(cat.wait, 3);
     this.energy = Math.min(this.maxEnergy, this.energy + 5);
     this.emote(cat, 'heart');
     Audio.play('heart');
     this.ui.toast(t('msg.petCat'));
+  }
+
+  // A fish turns a village cat into your companion for a couple of days.
+  feedCat(cat, fishId) {
+    if (!this.inv.remove(fishId, 1)) return;
+    cat.friendUntil = this.day + FISHING.catDays;
+    this.flags.catUntil = this.cats.map((c) => c.friendUntil);
+    this.emote(cat, 'heart');
+    Audio.play('charm');
+    this.ui.toast(t('msg.catFriend'), 'clue');
+  }
+
+  // ------------------------------------------------------------ fishing
+  // wait for a bite -> react to "!" -> stop the marker inside the green zone.
+  startFishing(tile) {
+    if (!this._spend(FISHING.energy)) return;
+    const [a, b] = FISHING.wait;
+    this.fishing = { phase: 'wait', t: a + Math.random() * (b - a), tile };
+    Audio.play('swish');
+    this.ui.fishBar(this.fishing);
+  }
+
+  stopFishing(cancelled) {
+    if (!this.fishing) return;
+    this.fishing = null;
+    this.ui.fishBar(null);
+    if (cancelled) this.ui.toast(t('msg.fishCancel'));
+  }
+
+  _pickFish() {
+    const night = this.minutes >= 18 * 60;
+    const pool = FISH.filter((f) => !f.night || night).map((f) => [f, f.weight * (f.rain && this.weather === 'rain' ? 3 : 1)]);
+    let r = Math.random() * pool.reduce((n, [, w]) => n + w, 0);
+    for (const [f, w] of pool) { r -= w; if (r <= 0) return f; }
+    return pool[0][0];
+  }
+
+  _fishUpdate(dt) {
+    const F = this.fishing;
+    if (F.phase === 'reel') {
+      F.pos += F.dir * F.fish.speed * dt;
+      if (F.pos > 1) { F.pos = 1; F.dir = -1; }
+      if (F.pos < 0) { F.pos = 0; F.dir = 1; }
+      F.t -= dt;
+      if (F.t <= 0) { this.ui.toast(t('msg.fishEscaped')); Audio.play('error'); this.stopFishing(false); return; }
+    } else {
+      F.t -= dt;
+      if (F.t <= 0) {
+        if (F.phase === 'wait') { F.phase = 'bite'; F.t = FISHING.bite; this.emote(this.player, 'bang'); Audio.play('pickup'); }
+        else { this.ui.toast(t('msg.fishEscaped')); Audio.play('error'); this.stopFishing(false); return; }
+      }
+    }
+    this.ui.fishBar(F);
+  }
+
+  _fishInput() {
+    const F = this.fishing;
+    if (F.phase === 'wait') { this.ui.toast(t('msg.fishTooSoon')); this.stopFishing(false); return; }
+    if (F.phase === 'bite') {
+      const fish = this._pickFish();
+      Object.assign(F, { phase: 'reel', fish, pos: 0, dir: 1, t: 4, zone: fish.zone, center: 0.25 + Math.random() * 0.5 });
+      this.ui.fishBar(F);
+      return;
+    }
+    if (Math.abs(F.pos - F.center) <= F.zone / 2) {
+      if (!this.inv.canFit(F.fish.id)) { this.ui.toast(t('msg.invFull'), 'warn'); this.stopFishing(false); return; }
+      this.inv.add(F.fish.id, 1);
+      this.stats.fish = (this.stats.fish || 0) + 1;
+      Progress.add('fish');
+      Audio.play('coin');
+      this.ui.toast(t('msg.fishCaught', { item: t(`item.${F.fish.id}.name`) }), 'clue');
+    } else { this.ui.toast(t('msg.fishEscaped')); Audio.play('error'); }
+    this.stopFishing(false);
   }
 
   // Villagers chatting among themselves: speech bubbles near the player.
@@ -426,7 +553,11 @@ export class Game {
     const npc = this.npcInFront();
     if (npc) return { label: t('prompt.talk', { name: t(`npc.${npc.id}.short`) }), run: () => this.talkTo(npc) };
     const cat = this.catInFront();
-    if (cat) return { label: t('prompt.pet'), run: () => this.petCat(cat) };
+    if (cat) {
+      const held = this.inv.current;
+      if (held && ITEMS[held.id].type === 'fish') return { label: t('prompt.feedCat'), run: () => this.feedCat(cat, held.id) };
+      return { label: t('prompt.pet'), run: () => this.petCat(cat) };
+    }
     const obj = this.world.objectAt(f.x, f.y);
     if (obj && !obj.removed) {
       if (obj.kind === 'gnome') return { label: t('prompt.statue'), run: () => this.ui.say(null, fmt(t('statue.look'), { name: t(`npc.${obj.victim}.short`) })) };
@@ -448,7 +579,8 @@ export class Game {
     else if (cur.id === 'watering_can') {
       if (this._isWaterSource(f.x, f.y)) label = t('prompt.refill');
       else if (this.farm.canWater(f.x, f.y)) label = t('prompt.water');
-    } else if (cur.id === 'scythe' && this.farm.debrisAt(f.x, f.y)) label = t('prompt.clear', { debris: t(`debris.${this.farm.debrisAt(f.x, f.y)}`) });
+    } else if (cur.id === 'fishing_rod' && this.world.tile(f.x, f.y) === T.WATER) label = t('prompt.fish');
+    else if (cur.id === 'scythe' && this.farm.debrisAt(f.x, f.y)) label = t('prompt.clear', { debris: t(`debris.${this.farm.debrisAt(f.x, f.y)}`) });
     else if (item.type === 'seed' && this.farm.canPlant(f.x, f.y)) label = t('prompt.plant', { crop: t(`crop.${item.crop}`) });
     return { label, run: none.run };
   }
@@ -483,6 +615,11 @@ export class Game {
       if (plot.w) { this.ui.toast(t('msg.alreadyWatered')); return; }
       if (this.water <= 0) { this.ui.toast(t('msg.canEmpty'), 'warn'); Audio.play('error'); return; }
       if (this._spend(item.energy)) { farm.water(f.x, f.y); this.water--; Audio.play('water'); this.tut('water'); }
+      return;
+    }
+    if (id === 'fishing_rod') {
+      if (this.world.tile(f.x, f.y) === T.WATER) this.startFishing(f);
+      else this.ui.toast(t('msg.fishWhere'));
       return;
     }
     if (id === 'scythe') {

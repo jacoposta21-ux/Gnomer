@@ -204,7 +204,7 @@ body.touch #prompt { bottom: 4.4rem; left: auto; right: 6.2rem; transform: none;
 
 /* intro note (non-blocking) */
 .note {
-  position: absolute; left: 0.6rem; top: 5.6rem; width: min(21rem, 46vw); max-height: calc(100vh - 11rem); overflow-y: auto;
+  position: absolute; right: 0.6rem; top: 3.6rem; width: min(21rem, 46vw); max-height: calc(100vh - 11rem); overflow-y: auto;
   background: #e8dcc0; color: #2b2125; border-radius: 6px; padding: 0.6rem 0.8rem; pointer-events: auto;
   box-shadow: 3px 3px 0 rgba(0,0,0,0.45); font-size: 0.78rem; animation: pop 0.2s ease-out;
 }
@@ -263,3 +263,38 @@ body.touch #prompt { bottom: 4.4rem; left: auto; right: 6.2rem; transform: none;
 .tutorial.detective .tut-head { color: #e88a7a; }
 .lang-select { appearance: auto; background: var(--panel2); color: var(--cream); }
 .lang-select option { background: var(--panel); color: var(--cream); }
+
+/* tutorial: goal line, flash on change, label next to the yellow arrow */
+.tutorial .tut-goal { font-weight: bold; color: var(--cream); margin-bottom: 0.15rem; }
+.tutorial .tut-follow { margin-top: 0.25rem; color: var(--accent2); font-size: 0.75rem; }
+.tutorial.flash { animation: tutFlash 1.2s ease-out; }
+@keyframes tutFlash { 0% { box-shadow: 0 0 0 0 rgba(226, 181, 74, 0.9); } 100% { box-shadow: 0 0 0 14px rgba(226, 181, 74, 0); } }
+.tut-label {
+  position: absolute; transform: translate(-50%, -100%); pointer-events: none; white-space: nowrap;
+  background: var(--accent2); color: #2b2125; font-weight: bold; font-size: 0.75rem; border-radius: 6px; padding: 0.1rem 0.45rem;
+  border: 2px solid #2b2125; box-shadow: 0 2px 0 rgba(0,0,0,0.35);
+}
+.tut-label.edge { transform: translate(-50%, -50%); }
+
+/* waiting, room names */
+#btn-wait { font-size: 1.1rem; }
+#btn-wait.on { border-color: var(--accent2); background: #5a4430; }
+#wait-banner:empty, #hud-loc:empty { display: none; }
+#wait-banner { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); background: rgba(43,33,37,0.9); border: 2px solid var(--accent2); border-radius: 8px; padding: 0.4rem 0.9rem; font-weight: bold; text-align: center; }
+#hud-loc { color: var(--accent2); font-size: 0.8rem; font-weight: bold; }
+#area-banner { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); font-family: Georgia, serif; font-size: 1.6rem; color: var(--cream); text-shadow: 2px 2px 0 #000, 0 0 12px rgba(0,0,0,0.6); opacity: 0; pointer-events: none; white-space: nowrap; }
+#area-banner.show { animation: areaIn 2.4s ease-out forwards; }
+@keyframes areaIn { 0% { opacity: 0; transform: translate(-50%, 6px); } 15% { opacity: 1; transform: translate(-50%, 0); } 75% { opacity: 1; } 100% { opacity: 0; } }
+#door-label { position: absolute; transform: translate(-50%, -100%); display: none; pointer-events: none; white-space: nowrap; background: #e8dcc0; color: #2b2125; border: 2px solid #6b4a3a; border-radius: 4px; padding: 0 0.4rem; font-size: 0.75rem; font-weight: bold; }
+
+.coin { display: inline-flex; align-items: center; gap: 0.2rem; white-space: nowrap; }
+.coin img { width: 0.95em; height: 0.95em; image-rendering: pixelated; }
+
+/* fishing */
+#fish-bar { position: absolute; left: 50%; bottom: 7.5rem; transform: translateX(-50%); width: min(22rem, 80vw); text-align: center;
+  background: rgba(43,33,37,0.92); border: 2px solid var(--line); border-radius: 8px; padding: 0.4rem 0.6rem; pointer-events: none; }
+#fish-bar.bite { border-color: var(--accent2); animation: blink 0.3s infinite; }
+#fish-bar .fb-text { font-weight: bold; margin-bottom: 0.3rem; }
+#fish-bar .fb-track { position: relative; height: 1rem; background: #1e1619; border-radius: 4px; overflow: hidden; }
+#fish-bar .fb-zone { position: absolute; top: 0; bottom: 0; background: #7d9a48; }
+#fish-bar .fb-mark { position: absolute; top: -2px; bottom: -2px; width: 4px; margin-left: -2px; background: var(--cream); box-shadow: 0 0 4px #fff; }

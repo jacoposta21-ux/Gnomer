@@ -30,6 +30,8 @@ function h(tag, props = {}, ...kids) {
   return el;
 }
 function icon(id, cls) { return h('img', { src: Art.iconUrls[id], alt: '', class: cls || 'px' }); }
+// Amount of money with the coin icon.
+function coin(n) { return h('span', { class: 'coin' }, h('img', { src: Art.ui.coin, alt: '' }), String(n)); }
 function itemName(id) { return t(`item.${id}.name`); }
 function hearts(n) { return h('span', { class: 'hearts' }, '♥'.repeat(n), h('span', { class: 'off' }, '♥'.repeat(5 - n))); }
 const byId = Object.fromEntries(VILLAGERS.map((v) => [v.id, v]));
@@ -55,12 +57,14 @@ export class UI {
     $('#btn-pause').setAttribute('aria-label', t('ui.pause'));
     $('#btn-mute').setAttribute('aria-label', t('ui.mute'));
     $('#touch-action').setAttribute('aria-label', t('ui.action'));
+    $('#btn-wait').setAttribute('aria-label', t('ui.wait')); $('#btn-wait').title = t('ui.wait');
     this._hotSig = ''; this._prompt = undefined;
   }
 
   init(game) {
     this.game = game;
     $('#btn-mute').onclick = () => this.toggleMute();
+    $('#btn-wait').onclick = () => { if (!this.modal && game.mode === 'play') { if (game.waiting) game.stopWaiting(); else game.startWaiting(); } };
     $('#btn-bag').onclick = () => { if (!this.modal && game.mode === 'play') this.openBag(game); };
     $('#btn-notebook').onclick = () => { if (!this.modal && game.mode === 'play') this.openNotebook(game); };
     $('#btn-pause').onclick = () => { if (!this.modal && game.mode === 'play') this.openPause(game); };
@@ -71,6 +75,7 @@ export class UI {
     $('#btn-mute').setAttribute('aria-label', t('ui.mute'));
     $('#touch-action').setAttribute('aria-label', t('ui.action'));
     this._muteIcon();
+    $('#btn-wait').setAttribute('aria-label', t('ui.wait')); $('#btn-wait').title = t('ui.wait');
     // clicking the dimmed backdrop of a closable menu closes it; clicking during dialogue advances it
     this.root.addEventListener('pointerdown', (e) => {
       if (e.target !== this.root || !this.modal) return;
@@ -196,11 +201,13 @@ export class UI {
   updateHud(game) {
     $('#hud-day').textContent = `${t('ui.dayLabel', { dow: tList('days')[dayOfWeek(game.day)], day: game.day })} · ${t(`weather.${game.weather}`)}`;
     $('#hud-time').textContent = formatClock(game.minutes);
-    $('#hud-money').textContent = t('ui.money', { n: game.money });
+    const hm = $('#hud-money');
+    if (hm.dataset.n !== String(game.money)) { hm.dataset.n = String(game.money); hm.replaceChildren(coin(game.money)); hm.title = t('ui.money', { n: game.money }); }
     const omen = $('#hud-omen');
     const showOmen = game.omenTonight && game.minutes >= 18 * 60;
     if (omen.dataset.on !== String(showOmen)) { omen.dataset.on = String(showOmen); omen.textContent = showOmen ? t('ui.omen') : ''; }
     this.updateTutorial(game);
+    this._updateLocation(game);
     const pct = Math.max(0, (game.energy / game.maxEnergy) * 100);
     const fill = $('#hud-energy-fill');
     fill.style.width = `${pct}%`;
@@ -228,6 +235,65 @@ export class UI {
       el.append(h('span', { class: 'num', text: i + 1 }));
       bar.append(el);
     }
+  }
+
+  // Fishing overlay: hint while waiting, then a bar with a moving marker and a green zone.
+  fishBar(F) {
+    let el = $('#fish-bar');
+    if (!F) { if (el) el.remove(); return; }
+    if (!el) {
+      el = h('div', { id: 'fish-bar' }, h('div', { class: 'fb-text' }), h('div', { class: 'fb-track' }, h('div', { class: 'fb-zone' }), h('div', { class: 'fb-mark' })));
+      $('#hud').append(el);
+    }
+    const key = { wait: 'fishing.wait', bite: 'fishing.bite', reel: 'fishing.reel' }[F.phase];
+    const txt = t(key);
+    const te = el.querySelector('.fb-text');
+    if (te.textContent !== txt) te.textContent = txt;
+    el.classList.toggle('bite', F.phase === 'bite');
+    const track = el.querySelector('.fb-track');
+    track.style.display = F.phase === 'reel' ? '' : 'none';
+    if (F.phase === 'reel') {
+      const z = el.querySelector('.fb-zone');
+      z.style.left = `${(F.center - F.zone / 2) * 100}%`; z.style.width = `${F.zone * 100}%`;
+      el.querySelector('.fb-mark').style.left = `${F.pos * 100}%`;
+    }
+  }
+
+  setWaiting(on) {
+    const el = $('#wait-banner');
+    el.textContent = on ? t('ui.waiting') : '';
+    $('#btn-wait').classList.toggle('on', on);
+  }
+
+  areaBanner(text) {
+    if (!text) return;
+    const el = $('#area-banner');
+    el.textContent = text;
+    el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  }
+
+  // Location line under the clock + nameplate above a nearby house door.
+  _updateLocation(game) {
+    const area = game.playerArea();
+    const name = game.areaName(area) || '';
+    const loc = $('#hud-loc');
+    if (loc.textContent !== name) loc.textContent = name;
+    const lab = $('#door-label');
+    let best = null;
+    if (area.outdoor && !this.modal) {
+      const p = game.player;
+      for (const b of game.world.buildings) {
+        const inner = game.world.areaById[b.def.interior];
+        const d = Math.hypot(inner.door.x * 16 + 8 - p.x, inner.door.y * 16 + 8 - p.y);
+        if (d < 56 && (!best || d < best.d)) best = { d, door: inner.door, name: game.areaName(inner) };
+      }
+    }
+    if (!best) { lab.style.display = 'none'; return; }
+    const r = game.renderer, dpr = window.devicePixelRatio || 1;
+    lab.style.display = 'block';
+    if (lab.textContent !== best.name) lab.textContent = best.name;
+    lab.style.left = `${((best.door.x * 16 + 8 - Math.round(r.cam.x)) * r.scale) / dpr}px`;
+    lab.style.top = `${((best.door.y * 16 - 2 - Math.round(r.cam.y)) * r.scale) / dpr}px`;
   }
 
   setPrompt(label) {
@@ -396,17 +462,17 @@ export class UI {
     const body = h('div');
     const money = h('span', { class: 'price' });
     const render = () => {
-      money.textContent = t('ui.money', { n: game.money });
+      money.replaceChildren(coin(game.money));
       body.innerHTML = '';
       body.append(h('p', { class: 'help', text: marigold.gnomed ? t('shop.honor') : t('shop.greet') }));
       if (tab === 'buy') {
         const rows = SHOP_STOCK.map((id) => h('div', { class: 'item-row' }, icon(id),
           h('div', { class: 'grow' }, h('div', { class: 'name', text: itemName(id) }), h('div', { class: 'desc', text: t(`item.${id}.desc`) })),
-          h('span', { class: 'price', text: t('shop.price', { n: ITEMS[id].price }) }),
+          h('span', { class: 'price' }, coin(ITEMS[id].price)),
           h('button', { class: 'btn small', disabled: game.money < ITEMS[id].price, onclick: () => { if (game.buy(id)) this.toast(t('msg.bought', { item: itemName(id) })); render(); } }, t('shop.buyTab'))));
         rows.push(h('div', { class: 'item-row' }, icon('backpack'),
           h('div', { class: 'grow' }, h('div', { class: 'name', text: itemName('backpack') }), h('div', { class: 'desc', text: t('item.backpack.desc') })),
-          h('span', { class: 'price', text: game.flags.backpack ? t('shop.owned') : t('shop.price', { n: BACKPACK.price }) }),
+          h('span', { class: 'price' }, game.flags.backpack ? t('shop.owned') : coin(BACKPACK.price)),
           h('button', { class: 'btn small', disabled: game.flags.backpack || game.money < BACKPACK.price, onclick: () => { if (game.buy('backpack')) this.toast(t('msg.bought', { item: itemName('backpack') })); render(); } }, t('shop.buyTab'))));
         body.append(...rows);
       } else {
@@ -416,7 +482,7 @@ export class UI {
           any = true;
           body.append(h('div', { class: 'item-row' }, icon(s.id),
             h('div', { class: 'grow' }, h('div', { class: 'name', text: `${itemName(s.id)} ×${s.qty}` })),
-            h('span', { class: 'price', text: t('shop.price', { n: game.sellValue(s.id) }) }),
+            h('span', { class: 'price' }, coin(game.sellValue(s.id))),
             h('button', { class: 'btn small', onclick: () => { game.sellSlot(i, false); render(); } }, t('shop.sellOne')),
             s.qty > 1 ? h('button', { class: 'btn small', onclick: () => { game.sellSlot(i, true); render(); } }, t('shop.sellAll')) : null));
         });
@@ -443,7 +509,7 @@ export class UI {
         if (!s || !game.sellValue(s.id) || ITEMS[s.id].type === 'tool') return;
         any = true;
         left.append(h('div', { class: 'item-row' }, icon(s.id), h('div', { class: 'grow' }, `${itemName(s.id)} ×${s.qty}`),
-          h('span', { class: 'price', text: t('shop.price', { n: game.sellValue(s.id) * s.qty }) }),
+          h('span', { class: 'price' }, coin(game.sellValue(s.id) * s.qty)),
           h('button', { class: 'btn small', onclick: () => { game.shipSlot(i); render(); } }, t('ui.ok'))));
       });
       if (!any) left.append(h('p', { class: 'help', text: t('shop.nothingToSell') }));
@@ -633,7 +699,7 @@ export class UI {
     const list = ACHIEVEMENTS.map((a) => h('div', { class: `item-row ach${un[a.id] ? ' got' : ''}` },
       h('span', { class: 'ach-icon', text: un[a.id] ? '★' : '☆' }),
       h('div', { class: 'grow' }, h('div', { class: 'name', text: t(`achievement.${a.id}.name`) }), h('div', { class: 'desc', text: t(`achievement.${a.id}.desc`) }))));
-    const stats = ['games', 'wins', 'losses', 'days', 'harvested', 'earned', 'clues', 'quests', 'pets'].map((k) =>
+    const stats = ['games', 'wins', 'losses', 'days', 'harvested', 'earned', 'clues', 'quests', 'fish', 'pets'].map((k) =>
       h('div', { class: 'summary-line' }, h('span', { text: t(`stats.${k}`) }), h('b', { text: String(st[k] || 0) })));
     const body = [h('p', { class: 'help', text: t('achievement.count', { n: got, total: ACHIEVEMENTS.length }) }), h('div', { class: 'cols' }, h('div', {}, list), h('div', {}, h('h3', { text: t('stats.title') }), stats))];
     this.open('achievements', this.panel(t('achievement.title'), body));
@@ -682,7 +748,7 @@ export class UI {
     if (game.mystery.attacks.length && !game.mystery.solved) body.append(h('p', { class: 'help', text: t('morning.victimsLeft', { n: game.victimCount, max: game.mystery.maxVictims }) }));
     body.append(h('h3', { text: t('morning.shipped') }));
     if (!r.shipped.length) body.append(h('p', { class: 'help', text: t('morning.nothingShipped') }));
-    for (const s of r.shipped) body.append(h('div', { class: 'item-row' }, icon(s.id), h('div', { class: 'grow' }, `${itemName(s.id)} ×${s.qty}`), h('span', { class: 'price', text: t('shop.price', { n: s.value }) })));
+    for (const s of r.shipped) body.append(h('div', { class: 'item-row' }, icon(s.id), h('div', { class: 'grow' }, `${itemName(s.id)} ×${s.qty}`), h('span', { class: 'price' }, coin(s.value))));
     if (r.shipped.length) body.append(h('div', { class: 'summary-line' }, h('b', { text: t('morning.total', { n: r.income }) })));
     if (r.seasonOver) body.append(h('p', { class: 'news good', text: t('msg.seasonOver') }));
     const el = this.panel(t('morning.title', { day: game.day }), body, [h('button', { class: 'btn primary focus', onclick: () => this.close() }, t('morning.ok'))], { noX: true });
@@ -705,16 +771,34 @@ export class UI {
   updateTutorial(game) {
     const step = game.tutStep();
     let card = $('#tutorial');
-    if (!step || !game.flags.introDone || game.mode !== 'play') { if (card) card.remove(); return; }
+    this._updateArrowLabel(game, step);
+    if (!step || game.mode !== 'play') { if (card) card.remove(); return; }
     const pr = game.tutProgress();
     const key = `${step.id}|${pr.n}|${pr.phase}`;
     if (card && card.dataset.key === key) return;
     if (card) card.remove();
-    card = h('div', { id: 'tutorial', class: `tutorial ${pr.phase}`, 'data-key': key },
+    card = h('div', { id: 'tutorial', class: `tutorial ${pr.phase} flash`, 'data-key': key },
       h('div', { class: 'tut-head' }, h('b', { text: t(`tutorial.title_${pr.phase}`, { n: pr.n, total: pr.total }) }),
         h('button', { class: 'x-btn', 'aria-label': t('tutorial.skip'), title: t('tutorial.skip'), onclick: () => { game.skipTutorial(); this.updateTutorial(game); } }, '✕')),
-      h('div', { text: t(`tutorial.${step.id}`) }));
+      h('div', { class: 'tut-goal', text: t(`tutorial.short.${step.id}`) }),
+      h('div', { text: t(`tutorial.${step.id}`) }),
+      game.tutTarget() ? h('div', { class: 'tut-follow', text: t('tutorial.follow') }) : null);
     $('#hud-left').append(card);
+  }
+
+  // Yellow label that travels with the objective arrow, so the arrow always says what it wants.
+  _updateArrowLabel(game, step) {
+    let el = $('#tut-label');
+    const r = game.renderer, pos = r.arrowPos;
+    if (!step || !pos || game.mode !== 'play' || this.modal) { if (el) el.style.display = 'none'; return; }
+    if (!el) { el = h('div', { id: 'tut-label', class: 'tut-label' }); $('#hud').append(el); }
+    const txt = t(`tutorial.short.${step.id}`);
+    if (el.textContent !== txt) el.textContent = txt;
+    const dpr = window.devicePixelRatio || 1;
+    el.style.display = '';
+    el.style.left = `${(pos.x * r.scale) / dpr}px`;
+    el.style.top = `${(pos.y * r.scale) / dpr}px`;
+    el.classList.toggle('edge', pos.edge);
   }
 
   // ------------------------------------------------------------ endings

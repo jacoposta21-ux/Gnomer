@@ -5,6 +5,7 @@
 //   field: true             -> the middle of the farm field
 //   obj: kind               -> the first object of that kind (indoors: via the building door)
 //   place: [x, y]           -> an outdoor tile
+//   npc: true               -> the nearest villager
 //   sparkle: true           -> the nearest clue sparkle
 export const TUTORIAL = {
   // Day one: the farm loop.
@@ -15,7 +16,7 @@ export const TUTORIAL = {
     { id: 'plant', target: { field: true } },
     { id: 'water', target: { field: true } },
     { id: 'ship', target: { obj: 'bin' } },
-    { id: 'talk', target: { place: [48, 22] } },
+    { id: 'talk', target: { npc: true } },
     { id: 'shop', target: { obj: 'counter' } },
     { id: 'notebook' },
     { id: 'sleep', target: { obj: 'bed' } },
@@ -23,7 +24,7 @@ export const TUTORIAL = {
   // After the first gnoming: how to investigate and catch the Gnomer.
   detective: [
     { id: 'inspect', target: { sparkle: true } },
-    { id: 'ask' },
+    { id: 'ask', target: { npc: true } },
     { id: 'lectern', target: { obj: 'lectern' } },
     { id: 'craft', target: { obj: 'workbench' } },
     { id: 'charm' },

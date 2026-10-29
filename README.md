@@ -63,6 +63,7 @@ console.
 | Bag / rearrange items | I or B | Bag button |
 | Pause | Esc or P | Pause button |
 | Mute | M | Speaker button |
+| Wait (fast-forward ×6) | F | ⏩ button |
 
 In dialogue, E/Space/click advances. Pick answers with the arrow keys + E, the number keys or a click.
 Every menu also works from the keyboard: arrows/WASD move the highlight, E/Space choose, Esc closes.
@@ -93,6 +94,12 @@ B back/pause, X bag, Y notebook, LB/RB hotbar, Start pause.
 - **Requests:** villagers post requests (notice board / Notebook). Deliver in time for gold, hearts
   and sometimes a secret clue.
 - **Cranberries** keep fruiting every 2 days after the first harvest.
+- **Fishing:** buy a rod at the store, face the river and press E; react to the bite, then stop the
+  marker in the green. Four fish (one only at night, one rare and likelier in rain). Give a fish to a
+  village cat and it follows you everywhere for two days, and can be petted three times a day.
+- **Waiting:** press F (or ⏩) to fast-forward; it stops when you move, and at 22:30 on nights the
+  Gnomer is out. On quiet nights the clock runs twice as fast after 20:00.
+- Entering a building shows its name ("Odessa's house"); a nameplate appears above nearby doors.
 - **Difficulty** (title screen): Easy, Normal or Hard, chosen per new game.
 - **Achievements & statistics** carry over between games (title screen or pause menu).
 - **Accuse** the Gnomer at the lectern in the town hall (8:00-20:00). Get it right and everyone is

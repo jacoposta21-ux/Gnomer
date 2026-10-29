@@ -4,7 +4,7 @@ import { Platform } from './platform.js';
 import { ACHIEVEMENTS } from './data/achievements.js';
 
 const KEY = 'grimacres.progress';
-const EMPTY = () => ({ unlocked: {}, stats: { games: 0, wins: 0, losses: 0, harvested: 0, earned: 0, clues: 0, quests: 0, pets: 0, days: 0, caught: {} } });
+const EMPTY = () => ({ unlocked: {}, stats: { games: 0, wins: 0, losses: 0, harvested: 0, earned: 0, clues: 0, quests: 0, fish: 0, pets: 0, days: 0, caught: {} } });
 
 let data = null;
 
