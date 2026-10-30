@@ -17,7 +17,6 @@ export const TUTORIAL = {
     { id: 'shop', target: { obj: 'counter' } },
     { id: 'plant', target: { field: true } },
     { id: 'water', target: { field: true } },
-    { id: 'workbench', target: { obj: 'workbench' }, visit: true },
     { id: 'talk', target: { npc: true } },
     { id: 'notebook' },
     { id: 'rest', target: { obj: 'bench' } },
