@@ -142,6 +142,18 @@ B back/pause, X bag, Y notebook, LB/RB hotbar, Start pause.
 
 There are no ads, external links, logins or custom fullscreen button.
 
+## Uploading to Playgama
+
+```bash
+sh tools/zip-playgama.sh
+```
+
+This creates `grim-acres-playgama.zip`: the same game, with the CrazyGames SDK tag replaced by the
+[Playgama Bridge](https://github.com/Playgama/bridge) (v2.4.0, bundled from `vendor/playgama`, so
+the build makes no external requests). The adapter in `js/platform.js` initialises the Bridge,
+sends `game_ready` once loading ends and `gameplay_started` / `gameplay_stopped` around play, and
+reads the language from the Bridge. Saves stay in `localStorage`.
+
 ### Submission blurb
 
 **Short description**
@@ -184,7 +196,9 @@ js/progress.js        lifetime achievements and statistics
 js/save.js            versioned save/load through the platform adapter
 js/time.js            clock, store hours, door locks, day/night curve
 js/data/*.js          content: map, items, crops, recipes, villagers, killer profiles
-tools/zip.sh          packaging for upload
+tools/zip.sh          packaging for CrazyGames
+tools/zip-playgama.sh packaging for Playgama (swaps in the Playgama Bridge)
+vendor/playgama/      Playgama Bridge SDK + config
 tools/sim-test.js     headless season simulation tests
 ```
 
