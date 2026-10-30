@@ -126,7 +126,7 @@ export default {
     inspect: "Jemand wurde vergnomt! Geh zur Zwergenstatue und untersuche das Funkeln in der Nähe (E): das sind Hinweise.",
     ask: "Sprich mit Dorfbewohnern und wähle „Nach den Vergnomungen fragen“. Freunde erzählen mehr.",
     lectern: "Sieh dir das Anklagepult im Rathaus an, nördlich vom Platz (geöffnet 8:00-20:00). Folge dem gelben Pfeil.",
-    craft: "Geh zurück zur Werkbank neben deinem Haus: Sie ist deine Waffe gegen den Gnomer.",
+    craft: "Geh zur Werkbank neben deinem Haus: Sie ist deine Waffe gegen den Gnomer.",
     charm: "Gib das Amulett der Person, die der Gnomer deiner Meinung nach als Nächstes wählt (sprich sie an, „Etwas schenken…“).",
     workbench: "Sieh dir die Werkbank neben deinem Haus an (folge dem gelben Pfeil).",
     rest: "Müde? Setz dich auf die Bank vor deinem Haus (E): Fünf Stunden vergehen und deine Energie ist wieder voll.",

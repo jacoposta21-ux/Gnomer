@@ -127,7 +127,7 @@ export default {
     inspect: 'Someone was gnomed! Go to the gnome statue and inspect the sparkles nearby (E): they are clues.',
     ask: 'Talk to villagers and choose "Ask about the gnomings". Friends tell you more.',
     lectern: "Go and see the Accusation Lectern in the Town Hall, north of the square (open 8:00-20:00). Follow the yellow arrow.",
-    craft: "Go back to the workbench next to your house: it's your weapon against the Gnomer.",
+    craft: "Go to the workbench next to your house: it's your weapon against the Gnomer.",
     charm: 'Give the charm to whoever you think the Gnomer will pick next (talk to them, "Give a gift…").',
     workbench: "Go and see the workbench next to your house (follow the yellow arrow).",
     rest: "Tired? Sit on the bench in front of your house (E): five hours pass and your energy comes back in full.",

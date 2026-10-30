@@ -126,7 +126,7 @@ export default {
     inspect: "Alguém foi gnomizado! Vá até a estátua do anão e examine os brilhos próximos (E): são pistas.",
     ask: "Converse com os moradores e escolha “Perguntar sobre as gnomizações”. Amigos contam mais.",
     lectern: "Vá ver o Púlpito das acusações na Prefeitura, ao norte da praça (aberto das 8:00 às 20:00). Siga a seta amarela.",
-    craft: "Volte à bancada ao lado da sua casa: ela é sua arma contra o Gnomador.",
+    craft: "Vá até a bancada ao lado da sua casa: ela é sua arma contra o Gnomador.",
     charm: "Dê o amuleto a quem você acha que o Gnomador vai escolher em seguida (converse, “Dar um presente…”).",
     workbench: "Vá ver a bancada ao lado da sua casa (siga a seta amarela).",
     rest: "Cansado? Sente no banco em frente à casa (E): passam cinco horas e a energia volta toda.",

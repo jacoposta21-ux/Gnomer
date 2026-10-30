@@ -126,7 +126,7 @@ export default {
     inspect: "¡Alguien ha sido gnomizado! Ve a la estatua del gnomo e inspecciona los destellos cercanos (E): son pistas.",
     ask: "Habla con los vecinos y elige «Preguntar por las gnomizaciones». Los amigos te cuentan más.",
     lectern: "Ve a ver el Atril de las acusaciones en el Ayuntamiento, al norte de la plaza (abierto de 8:00 a 20:00). Sigue la flecha amarilla.",
-    craft: "Vuelve al banco de trabajo junto a tu casa: es tu arma contra el Gnomador.",
+    craft: "Ve al banco de trabajo junto a tu casa: es tu arma contra el Gnomador.",
     charm: "Dale el amuleto a quien creas que el Gnomador elegirá después (habla con él, «Hacer un regalo…»).",
     workbench: "Ve a ver el banco de trabajo junto a tu casa (sigue la flecha amarilla).",
     rest: "¿Cansado? Siéntate en el banco frente a tu casa (E): pasan cinco horas y recuperas toda la energía.",

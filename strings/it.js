@@ -127,7 +127,7 @@ export default {
     inspect: "Qualcuno è stato gnomizzato! Vai alla statua del nano ed esamina i luccichii lì vicino (E): sono indizi.",
     ask: "Parla con gli abitanti e scegli «Chiedi delle gnomizzazioni». Gli amici ti dicono di più.",
     lectern: "Vai a vedere il Leggio delle accuse nel Municipio, a nord della piazza (aperto 8:00-20:00). Segui la freccia gialla.",
-    craft: "Torna al banco da lavoro accanto a casa: è la tua arma contro lo Gnomatore.",
+    craft: "Vai al banco da lavoro accanto a casa: è la tua arma contro lo Gnomatore.",
     charm: "Regala l'amuleto a chi pensi che lo Gnomatore sceglierà come prossima vittima (parlaci, «Fai un regalo…»).",
     workbench: "Vai a vedere il banco da lavoro accanto a casa (segui la freccia gialla).",
     rest: "Stanco? Siediti sulla panchina davanti a casa (E): passano cinque ore e l'energia torna al massimo.",

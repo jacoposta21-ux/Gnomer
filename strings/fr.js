@@ -126,7 +126,7 @@ export default {
     inspect: "Quelqu'un a été gnomisé ! Allez à la statue du nain et examinez les scintillements autour (E) : ce sont des indices.",
     ask: "Parlez aux villageois et choisissez « Poser des questions sur les gnomisations ». Les amis en disent plus.",
     lectern: "Allez voir le Pupitre des accusations à la mairie, au nord de la place (ouvert de 8:00 à 20:00). Suivez la flèche jaune.",
-    craft: "Retournez à l'établi près de votre maison : c'est votre arme contre le Gnomeur.",
+    craft: "Allez à l'établi près de votre maison : c'est votre arme contre le Gnomeur.",
     charm: "Offrez le talisman à la personne que le Gnomeur choisira ensuite selon vous (parlez-lui, « Offrir un cadeau… »).",
     workbench: "Allez voir l'établi à côté de votre maison (suivez la flèche jaune).",
     rest: "Fatigué ? Asseyez-vous sur le banc devant la maison (E) : cinq heures passent et votre énergie revient au maximum.",
